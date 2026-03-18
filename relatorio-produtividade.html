@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Produtividade - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
+        body { font-family: sans-serif; background: var(--bg-body); margin: 0; padding: 15px; }
+        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #f0d8d8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #eee; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-export { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>RELATÓRIO DE PRODUTIVIDADE (PAGAMENTOS)</header>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Contagem de Cargas por Carregador</h3>
+        <button class="btn-export" onclick="window.print()">EXPORTAR PDF</button>
+    </div>
+    
+    <table id="tabelaProdutividade">
+        <thead>
+            <tr>
+                <th>NOME DO COLABORADOR</th>
+                <th>CARGAS NO PERÍODO</th>
+                <th>VÍNCULO</th>
+            </tr>
+        </thead>
+        <tbody id="corpoRelatorio">
+            </tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { db, collection } from './firebase-config.js';
+    import { getDocs, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    async function gerarRelatorio() {
+        const corpo = document.getElementById('corpoRelatorio');
+        
+        // 1. Pegar todos os funcionários para saber o vínculo (MEI/Terceiro)
+        const equipeSnap = await getDocs(collection(db, "equipe"));
+        let dadosEquipe = {};
+        equipeSnap.forEach(doc => {
+            dadosEquipe[doc.data().nome] = doc.data().vinculo;
+        });
+
+        // 2. Pegar todas as expedições
+        const expSnap = await getDocs(collection(db, "expedicoes"));
+        let contagem = {};
+
+        expSnap.forEach(doc => {
+            const equipe = doc.data().equipe_carregamento || [];
+            equipe.forEach(nome => {
+                contagem[nome] = (contagem[nome] || 0) + 1;
+            });
+        });
+
+        // 3. Montar a tabela
+        corpo.innerHTML = "";
+        for (const [nome, total] of Object.entries(contagem)) {
+            corpo.innerHTML += `
+                <tr>
+                    <td><strong>${nome}</strong></td>
+                    <td>${total} veículos carregados</td>
+                    <td>${dadosEquipe[nome] || 'N/A'}</td>
+                </tr>
+            `;
+        }
+    }
+
+    gerarRelatorio();
+</script>
+
+</body>
+</html>
