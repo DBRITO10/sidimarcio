@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Equipe - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --text: #333; --border: #f0d8d8; }
+        body { font-family: sans-serif; background: var(--bg-body); margin: 0; padding: 15px; color: var(--text); }
+        header { background: var(--primary); color: white; padding: 15px; margin: -15px -15px 15px -15px; font-weight: bold; text-align: center; }
+        
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+        
+        label { display: block; margin-top: 12px; font-weight: bold; font-size: 13px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th { background: #eee; padding: 10px; text-align: left; font-size: 12px; border-bottom: 2px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        
+        .badge-mei { background: #e3f2fd; color: #1565c0; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-terceiro { background: #f3e5f5; color: #7b1fa2; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>GESTÃO DE EQUIPE E PARCEIROS</header>
+
+<div class="container">
+    <div class="card">
+        <h3>Novo Cadastro</h3>
+        <form id="formEquipe">
+            <label>Nome Completo</label>
+            <input type="text" id="nomePessoa" placeholder="Ex: João Silva" required>
+
+            <label>CPF</label>
+            <input type="text" id="cpfPessoa" placeholder="000.000.000-00" required>
+
+            <label>Tipo de Vínculo</label>
+            <select id="vinculoPessoa">
+                <option value="MEI">MEI (Microempreendedor)</option>
+                <option value="TERCEIRIZADO">Terceirizado (Avulso)</option>
+            </select>
+
+            <button type="submit" class="btn-salvar">CADASTRAR NA BASE</button>
+        </form>
+    </div>
+
+    <div class="card" style="overflow-x: auto;">
+        <h3>Pessoas Cadastradas</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>NOME</th>
+                    <th>VÍNCULO</th>
+                    <th>CPF</th>
+                </tr>
+            </thead>
+            <tbody id="listaEquipeCorpo">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { db, collection, addDoc, serverTimestamp } from './firebase-config.js';
+    import { query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const form = document.getElementById('formEquipe');
+    const tabela = document.getElementById('listaEquipeCorpo');
+
+    // 1. Salvar no Firebase
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+
+        try {
+            await addDoc(collection(db, "equipe"), {
+                nome: document.getElementById('nomePessoa').value.toUpperCase(),
+                cpf: document.getElementById('cpfPessoa').value,
+                vinculo: document.getElementById('vinculoPessoa').value,
+                criadoEm: serverTimestamp()
+            });
+            alert("Pessoa cadastrada!");
+            form.reset();
+        } catch (err) {
+            alert("Erro ao cadastrar.");
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // 2. Listar Pessoas em Tempo Real
+    const q = query(collection(db, "equipe"), orderBy("nome", "asc"));
+    onSnapshot(q, (snapshot) => {
+        tabela.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            const badgeClass = p.vinculo === 'MEI' ? 'badge-mei' : 'badge-terceiro';
+            tabela.innerHTML += `
+                <tr>
+                    <td><strong>${p.nome}</strong></td>
+                    <td><span class="${badgeClass}">${p.vinculo}</span></td>
+                    <td>${p.cpf}</td>
+                </tr>
+            `;
+        });
+    });
+</script>
+
+</body>
+</html>
