@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Expedição Simonetti</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #d32f2f;
+            --bg-body: #fdf2f2;
+            --bg-card: #ffffff;
+            --border: #f0d8d8;
+            --text: #333;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; color: var(--text); }
+        
+        header { 
+            background: var(--primary); color: white; padding: 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .container { padding: 15px; max-width: 1200px; margin: auto; }
+
+        /* Grid de Gráficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card { 
+            background: white; padding: 15px; border-radius: 8px; 
+            border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .card h3 { margin-top: 0; font-size: 16px; color: var(--primary); text-align: center; }
+
+        /* Tabela Responsiva */
+        .table-container { overflow-x: auto; margin-top: 20px; background: white; border-radius: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: var(--primary); color: white; padding: 12px; text-align: left; font-size: 13px; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+        .badge {
+            padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px;
+        }
+        .status-separacao { background: #ef6c00; }
+        .status-finalizado { background: #1b5e20; }
+
+        .resumo-topo {
+            text-align: center; margin: 20px 0;
+        }
+        .resumo-topo span {
+            border: 2px solid var(--primary); padding: 8px 20px; border-radius: 20px;
+            font-weight: bold; color: var(--primary);
+        }
+
+        canvas { max-height: 250px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>EXPEDIÇÃO MÓVEIS SIMONETTI</div>
+    <a href="cadastro-expedicao.html" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 10px; border-radius: 4px; font-size: 12px;">+ NOVA CARGA</a>
+</header>
+
+<div class="container">
+    <div class="resumo-topo">
+        <span id="totalIndicador">CARREGANDO DADOS...</span>
+    </div>
+
+    <div class="charts-grid">
+        <div class="card">
+            <h3>STATUS DAS EXPEDIÇÕES</h3>
+            <canvas id="chartStatus"></canvas>
+        </div>
+        <div class="card">
+            <h3>VEÍCULOS (CARGAS)</h3>
+            <canvas id="chartVeiculos"></canvas>
+        </div>
+    </div>
+
+    <div class="card table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>DATA</th>
+                    <th>EXPEDIÇÃO</th>
+                    <th>PLACA</th>
+                    <th>DESTINO</th>
+                    <th>STATUS</th>
+                    <th>PESO</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { db, collection } from './firebase-config.js';
+    import { query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const tabelaCorpo = document.getElementById('tabelaCorpo');
+    const totalIndicador = document.getElementById('totalIndicador');
+
+    // Variáveis para os Gráficos
+    let chartStatus, chartVeiculos;
+
+    // Função para atualizar ou criar os gráficos
+    function atualizarGraficos(dados) {
+        const countsStatus = { "EM SEPARAÇÃO": 0, "FINALIZADO": 0 };
+        const countsVeiculos = { "CARRETTA": 0, "TRUCK": 0, "3/4": 0 };
+
+        dados.forEach(doc => {
+            const d = doc.data();
+            countsStatus[d.status] = (countsStatus[d.status] || 0) + 1;
+            countsVeiculos[d.veiculo_tipo] = (countsVeiculos[d.veiculo_tipo] || 0) + 1;
+        });
+
+        // Gráfico Status
+        const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+        if(chartStatus) chartStatus.destroy();
+        chartStatus = new Chart(ctxStatus, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(countsStatus),
+                datasets: [{ data: Object.values(countsStatus), backgroundColor: ['#ef6c00', '#1b5e20', '#0288d1'] }]
+            }
+        });
+
+        // Gráfico Veículos
+        const ctxVeic = document.getElementById('chartVeiculos').getContext('2d');
+        if(chartVeiculos) chartVeiculos.destroy();
+        chartVeiculos = new Chart(ctxVeic, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(countsVeiculos),
+                datasets: [{ data: Object.values(countsVeiculos), backgroundColor: ['#2e7d32', '#455a64', '#7b1fa2'] }]
+            }
+        });
+    }
+
+    // Escutar dados em tempo real
+    const q = query(collection(db, "expedicoes"), orderBy("criadoEm", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        tabelaCorpo.innerHTML = "";
+        let totalExp = snapshot.size;
+        let placasUnicas = new Set();
+
+        snapshot.forEach((doc) => {
+            const item = doc.data();
+            placasUnicas.add(item.placa);
+
+            const row = `
+                <tr>
+                    <td>${item.data}</td>
+                    <td>${item.codigo}</td>
+                    <td>${item.placa}</td>
+                    <td>${item.destino}</td>
+                    <td><span class="badge ${item.status === 'FINALIZADO' ? 'status-finalizado' : 'status-separacao'}">${item.status}</span></td>
+                    <td>${item.peso.toLocaleString('pt-BR')} kg</td>
+                </tr>
+            `;
+            tabelaCorpo.innerHTML += row;
+        });
+
+        totalIndicador.innerText = `CARGAS: ${placasUnicas.size} | EXPEDIÇÕES: ${totalExp}`;
+        atualizarGraficos(snapshot);
+    });
+</script>
+
+</body>
+</html>
