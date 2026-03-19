@@ -4,80 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Produtividade - Simonetti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
-        :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
-        body { font-family: sans-serif; background: var(--bg-body); margin: 0; padding: 15px; }
-        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; text-align: center; margin-bottom: 20px; }
-        .card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #f0d8d8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #eee; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-export { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; }
+        
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; align-items: flex-end; }
+        .filtros label { font-size: 12px; font-weight: bold; }
+        .filtros input, .filtros select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-search { background: var(--primary); }
+        .btn-excel { background: #2e7d32; }
+        .btn-pdf { background: #e65100; }
+
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #f4f4f4; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .resumo-box { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; flex: 1; text-align: center; border-left: 5px solid var(--primary); }
     </style>
 </head>
 <body>
 
-<header>RELATÓRIO DE PRODUTIVIDADE (PAGAMENTOS)</header>
-
-<div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Contagem de Cargas por Carregador</h3>
-        <button class="btn-export" onclick="window.print()">EXPORTAR PDF</button>
+<header>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Relatório de Produtividade</span>
     </div>
-    
-    <table id="tabelaProdutividade">
-        <thead>
-            <tr>
-                <th>NOME DO COLABORADOR</th>
-                <th>CARGAS NO PERÍODO</th>
-                <th>VÍNCULO</th>
-            </tr>
-        </thead>
-        <tbody id="corpoRelatorio">
-            </tbody>
-    </table>
+    <span id="userName">...</span>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="filtros">
+            <div>
+                <label>INÍCIO</label>
+                <input type="date" id="dataInicio">
+            </div>
+            <div>
+                <label>FIM</label>
+                <input type="date" id="dataFim">
+            </div>
+            <div>
+                <label>VÍNCULO</label>
+                <select id="filtroVinculo">
+                    <option value="TODOS">TODOS</option>
+                    <option value="MEI">SÓ MEI</option>
+                    <option value="TERCEIRO">SÓ TERCEIRO</option>
+                </select>
+            </div>
+            <button class="btn btn-search" id="btnFiltrar">ATUALIZAR</button>
+        </div>
+
+        <div class="resumo-box">
+            <div class="stat-card">
+                <small>TOTAL DE CARGAS</small>
+                <h2 id="totalCargas">0</h2>
+            </div>
+            <div class="stat-card">
+                <small>PESO TOTAL</small>
+                <h2 id="totalPeso">0 kg</h2>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-excel" id="btnExportExcel">📊 EXPORTAR EXCEL</button>
+            <button class="btn btn-pdf" id="btnExportPDF">📄 EXPORTAR PDF</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="tabelaProdutividade">
+                <thead>
+                    <tr>
+                        <th>COLABORADOR</th>
+                        <th>VÍNCULO</th>
+                        <th>VEÍCULOS CARREGADOS</th>
+                        <th>PRODUTIVIDADE (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script type="module">
-    import { db, collection } from './firebase-config.js';
-    import { getDocs, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    async function gerarRelatorio() {
-        const corpo = document.getElementById('corpoRelatorio');
-        
-        // 1. Pegar todos os funcionários para saber o vínculo (MEI/Terceiro)
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 1. Configurar datas: 1º dia do mês até hoje
+    const hoje = new Date();
+    document.getElementById('dataInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+
+    onAuthStateChanged(auth, user => { if(user) carregarRelatorio(); });
+
+    async function carregarRelatorio() {
+        const dIni = new Date(document.getElementById('dataInicio').value + "T00:00:00");
+        const dFim = new Date(document.getElementById('dataFim').value + "T23:59:59");
+        const vinculoFiltro = document.getElementById('filtroVinculo').value;
+
+        // Pegar Equipe para saber o vínculo
         const equipeSnap = await getDocs(collection(db, "equipe"));
-        let dadosEquipe = {};
-        equipeSnap.forEach(doc => {
-            dadosEquipe[doc.data().nome] = doc.data().vinculo;
-        });
+        let equipeInfo = {};
+        equipeSnap.forEach(d => equipeInfo[d.data().nome] = d.data().vinculo);
 
-        // 2. Pegar todas as expedições
-        const expSnap = await getDocs(collection(db, "expedicoes"));
-        let contagem = {};
+        // Pegar Expedições no período que foram carregadas
+        const q = query(collection(db, "expedicoes"), 
+                  where("fimCarregamento", ">=", Timestamp.fromDate(dIni)),
+                  where("fimCarregamento", "<=", Timestamp.fromDate(dFim)));
+        
+        const expSnap = await getDocs(q);
+        let ranking = {};
+        let totalCargas = 0;
+        let totalPeso = 0;
 
         expSnap.forEach(doc => {
-            const equipe = doc.data().equipe_carregamento || [];
-            equipe.forEach(nome => {
-                contagem[nome] = (contagem[nome] || 0) + 1;
+            const data = doc.data();
+            totalCargas++;
+            totalPeso += (data.peso || 0);
+            
+            const membros = data.equipe_carregamento || [];
+            membros.forEach(nome => {
+                const vinc = equipeInfo[nome] || "TERCEIRO";
+                if (vinculoFiltro === "TODOS" || vinc === vinculoFiltro) {
+                    if (!ranking[nome]) ranking[nome] = { qtd: 0, vinculo: vinc };
+                    ranking[nome].qtd++;
+                }
             });
         });
 
-        // 3. Montar a tabela
+        document.getElementById('totalCargas').innerText = totalCargas;
+        document.getElementById('totalPeso').innerText = totalPeso.toLocaleString() + " kg";
+
+        const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
-        for (const [nome, total] of Object.entries(contagem)) {
+        
+        Object.entries(ranking).forEach(([nome, info]) => {
+            const perc = ((info.qtd / totalCargas) * 100).toFixed(1);
             corpo.innerHTML += `
                 <tr>
                     <td><strong>${nome}</strong></td>
-                    <td>${total} veículos carregados</td>
-                    <td>${dadosEquipe[nome] || 'N/A'}</td>
+                    <td>${info.vinculo}</td>
+                    <td>${info.qtd} veículos</td>
+                    <td>${perc}% do total</td>
                 </tr>
             `;
-        }
+        });
     }
 
-    gerarRelatorio();
-</script>
+    // Exportar EXCEL
+    document.getElementById('btnExportExcel').onclick = () => {
+        const table = document.getElementById("tabelaProdutividade");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `Produtividade_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
+    };
 
+    // Exportar PDF
+    document.getElementById('btnExportPDF').onclick = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Relatório de Produtividade - Móveis Simonetti", 14, 15);
+        doc.autoTable({ html: '#tabelaProdutividade', margin: { top: 25 } });
+        doc.save(`Produtividade_${new Date().toLocaleDateString()}.pdf`);
+    };
+
+    document.getElementById('btnFiltrar').onclick = carregarRelatorio;
+</script>
 </body>
 </html>
