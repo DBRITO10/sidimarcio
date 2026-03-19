@@ -43,16 +43,30 @@
         th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .status-criado { background: #e3f2fd; color: #1565c0; }
-        .status-separacao { background: #fff3e0; color: #ef6c00; }
-        .status-concluido { background: #e8f5e9; color: #2e7d32; }
+        /* --- CORES DOS STATUS --- */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-align: center; display: inline-block; min-width: 80px; }
+        .status-criado { background: #bbdefb; color: #0d47a1; } /* AZUL CLARO */
+        .status-separacao { background: #ffe0b2; color: #e65100; } /* LARANJA */
+        .status-conf-finalizada { background: #e1bee7; color: #4a148c; } /* ROXO */
+        .status-carregado { background: #fff9c4; color: #f57f17; } /* AMARELO */
+        .status-finalizado { background: #c8e6c9; color: #1b5e20; } /* VERDE */
 
-        .btn-acao { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-right: 2px; }
-        .btn-edit { background: #ffeb3b; color: #333; }
-        .btn-del { background: #ffebee; color: #c62828; }
-        .btn-status-sep { background: #ef6c00; color: white; }
-        .btn-status-ok { background: #2e7d32; color: white; }
+        .btn-acao { padding: 6px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 2px; transition: 0.2s; }
+        .btn-acao:hover { opacity: 0.8; }
+        
+        .btn-edit { background: #90a4ae; color: white; }
+        .btn-del { background: #ffcdd2; color: #c62828; }
+        
+        /* Botões de Mudar Status */
+        .b-sep { background: #ef6c00; color: white; }
+        .b-ok { background: #7b1fa2; color: white; }
+        .b-trip { background: #fbc02d; color: #333; }
+        .b-fin { background: #2e7d32; color: white; }
+
+        @media (max-width: 600px) {
+            .grid-form { grid-template-columns: 1fr 1fr; }
+            .resumo-box { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
@@ -139,8 +153,8 @@
     </div>
 
     <div class="export-btns">
-        <button onclick="exportarExcel()" class="btn-export btn-excel">📊 EXPORTAR EXCEL</button>
-        <button onclick="exportarPDF()" class="btn-export btn-pdf">📄 EXPORTAR PDF</button>
+        <button onclick="exportarExcel()" class="btn-export btn-excel">📊 EXCEL</button>
+        <button onclick="exportarPDF()" class="btn-export btn-pdf">📄 PDF</button>
     </div>
 
     <div class="card">
@@ -155,7 +169,7 @@
                         <th>TIPO</th>
                         <th>DESTINO</th>
                         <th>BOX</th>
-                        <th>PESO (KG)</th>
+                        <th>PESO</th>
                         <th>CONFERENTE</th>
                         <th>STATUS</th>
                         <th>AÇÕES</th>
@@ -179,14 +193,12 @@
 
     let veiculosCache = {};
 
-    // Função auxiliar para obter a data local no formato YYYY-MM-DD
     const obterDataLocal = () => {
         const agora = new Date();
         const offset = agora.getTimezoneOffset() * 60000;
         return new Date(agora - offset).toISOString().split('T')[0];
     };
 
-    // MÁSCARA DE PESO
     document.getElementById('pesoExp').addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, "");
         v = (v / 100).toFixed(2) + "";
@@ -199,12 +211,10 @@
         if (user) {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
-            
             const hoje = obterDataLocal();
             document.getElementById('dataExp').value = hoje;
             document.getElementById('filtroInicio').value = hoje;
             document.getElementById('filtroFim').value = hoje;
-            
             carregarPlacas();
             carregarDestinos();
             carregarConferentes();
@@ -268,10 +278,7 @@
     };
 
     function listarExpedicoes(inicio, fim) {
-        const q = query(collection(db, "expedicoes"), 
-                  where("data", ">=", inicio), 
-                  where("data", "<=", fim));
-
+        const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
         onSnapshot(q, (snap) => {
             const corpo = document.getElementById('corpoTabela');
             corpo.innerHTML = "";
@@ -295,9 +302,11 @@
                         <td>${item.peso}</td>
                         <td>${item.conferente}</td>
                         <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
-                        <td>
-                            <button class="btn-acao btn-status-sep" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
-                            <button class="btn-acao btn-status-ok" onclick="mudarStatus('${d.id}', 'CONFERÊNCIA FINALIZADA')">OK</button>
+                        <td style="white-space: nowrap;">
+                            <button class="btn-acao b-sep" title="Em Separação" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
+                            <button class="btn-acao b-ok" title="Conf. Finalizada" onclick="mudarStatus('${d.id}', 'CONFERÊNCIA FINALIZADA')">OK</button>
+                            <button class="btn-acao b-trip" title="Carregado" onclick="mudarStatus('${d.id}', 'CARREGADO/EM VIAGEM')">✈️</button>
+                            <button class="btn-acao b-fin" title="Finalizar" onclick="mudarStatus('${d.id}', 'FINALIZADO')">✅</button>
                             <button class="btn-acao btn-edit" onclick="editar('${d.id}')">✏️</button>
                             <button class="btn-acao btn-del" onclick="excluir('${d.id}')">🗑️</button>
                         </td>
@@ -316,7 +325,10 @@
     function getStatusClass(s) {
         if (s === 'CRIADO') return 'status-criado';
         if (s === 'EM SEPARAÇÃO') return 'status-separacao';
-        return 'status-concluido';
+        if (s === 'CONFERÊNCIA FINALIZADA') return 'status-conf-finalizada';
+        if (s === 'CARREGADO/EM VIAGEM') return 'status-carregado';
+        if (s === 'FINALIZADO') return 'status-finalizado';
+        return '';
     }
 
     window.mudarStatus = async (id, status) => await updateDoc(doc(db, "expedicoes", id), { status });
@@ -334,12 +346,12 @@
         document.getElementById('conferenteExp').value = data.conferente;
         document.getElementById('dataExp').value = data.data;
         document.getElementById('tituloForm').innerText = "EDITANDO EXPEDIÇÃO";
+        window.scrollTo({top: 0, behavior: 'smooth'});
     };
 
     window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
     document.getElementById('btnSair').onclick = () => signOut(auth);
 
-    // FUNÇÕES DE EXPORTAÇÃO (Globais para o HTML acessar)
     window.exportarExcel = () => {
         const wb = XLSX.utils.table_to_book(document.getElementById('tabelaExpedicoes'));
         XLSX.writeFile(wb, `Expedicoes_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
@@ -353,7 +365,7 @@
             html: '#tabelaExpedicoes',
             startY: 20,
             theme: 'grid',
-            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] // Remove a coluna de Ações no PDF
+            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] 
         });
         doc.save(`Expedicoes_Simonetti_${new Date().toLocaleDateString()}.pdf`);
     };
