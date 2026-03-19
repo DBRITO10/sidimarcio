@@ -33,39 +33,38 @@
         .resumo-item span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
         .resumo-item strong { font-size: 18px; color: var(--primary); }
 
-        .export-btns { display: flex; gap: 5px; margin-top: 10px; }
+        .search-container { width: 100%; margin-top: 10px; }
+        #inputBusca { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        #inputBusca:focus { border-color: var(--primary); }
+
+        .export-btns { display: flex; gap: 5px; margin-bottom: 10px; }
         .btn-export { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
         .btn-excel { background: #1b5e20; }
         .btn-pdf { background: #b71c1c; }
 
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; cursor: pointer; user-select: none; }
+        th:hover { background: #f0f0f0; }
+        th.sort-asc::after { content: " ▲"; color: var(--primary); }
+        th.sort-desc::after { content: " ▼"; color: var(--primary); }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 
-        /* --- CORES DOS STATUS --- */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-align: center; display: inline-block; min-width: 80px; }
-        .status-criado { background: #bbdefb; color: #0d47a1; } /* AZUL CLARO */
-        .status-separacao { background: #ffe0b2; color: #e65100; } /* LARANJA */
-        .status-conf-finalizada { background: #e1bee7; color: #4a148c; } /* ROXO */
-        .status-carregado { background: #fff9c4; color: #f57f17; } /* AMARELO */
-        .status-finalizado { background: #c8e6c9; color: #1b5e20; } /* VERDE */
+        .status-criado { background: #bbdefb; color: #0d47a1; }
+        .status-separacao { background: #ffe0b2; color: #e65100; }
+        .status-conf-finalizada { background: #e1bee7; color: #4a148c; }
+        .status-carregado { background: #fff9c4; color: #f57f17; }
+        .status-finalizado { background: #c8e6c9; color: #1b5e20; }
 
         .btn-acao { padding: 6px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 2px; transition: 0.2s; }
-        .btn-acao:hover { opacity: 0.8; }
-        
         .btn-edit { background: #90a4ae; color: white; }
         .btn-del { background: #ffcdd2; color: #c62828; }
-        
-        /* Botões de Mudar Status */
         .b-sep { background: #ef6c00; color: white; }
         .b-ok { background: #7b1fa2; color: white; }
-        .b-trip { background: #fbc02d; color: #333; }
-        .b-fin { background: #2e7d32; color: white; }
 
         @media (max-width: 600px) {
             .grid-form { grid-template-columns: 1fr 1fr; }
-            .resumo-box { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
@@ -85,44 +84,14 @@
         <form id="formExpedicao">
             <input type="hidden" id="editId">
             <div class="grid-form">
-                <div>
-                    <label>Nº EXPEDIÇÃO</label>
-                    <input type="text" id="codExp" placeholder="Ex: 92649" required>
-                </div>
-                <div>
-                    <label>PLACA</label>
-                    <select id="placa" required>
-                        <option value="">Selecione a Placa...</option>
-                    </select>
-                </div>
-                <div>
-                    <label>TIPO VEÍCULO</label>
-                    <input type="text" id="tipoVeic" readonly style="background: #f9f9f9;">
-                </div>
-                <div>
-                    <label>BOX (Doca)</label>
-                    <input type="text" id="boxExp" placeholder="Ex: 7D" style="text-transform: uppercase;" required>
-                </div>
-                <div>
-                    <label>PESO (KG)</label>
-                    <input type="text" id="pesoExp" placeholder="0,00" required>
-                </div>
-                <div>
-                    <label>DESTINO</label>
-                    <select id="destinoExp" required>
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-                <div>
-                    <label>CONFERENTE</label>
-                    <select id="conferenteExp" required>
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-                <div>
-                    <label>DATA</label>
-                    <input type="date" id="dataExp" required>
-                </div>
+                <div><label>Nº EXPEDIÇÃO</label><input type="text" id="codExp" placeholder="Ex: 92649" required></div>
+                <div><label>PLACA</label><select id="placa" required><option value="">Selecione...</option></select></div>
+                <div><label>TIPO VEÍCULO</label><input type="text" id="tipoVeic" readonly style="background: #f9f9f9;"></div>
+                <div><label>BOX (Doca)</label><input type="text" id="boxExp" placeholder="Ex: 7D" style="text-transform: uppercase;" required></div>
+                <div><label>PESO (KG)</label><input type="text" id="pesoExp" placeholder="0,00" required></div>
+                <div><label>DESTINO</label><select id="destinoExp" required><option value="">Selecione...</option></select></div>
+                <div><label>CONFERENTE</label><select id="conferenteExp" required><option value="">Selecione...</option></select></div>
+                <div><label>DATA</label><input type="date" id="dataExp" required></div>
             </div>
             <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR EXPEDIÇÃO</button>
         </form>
@@ -130,29 +99,21 @@
 
     <div class="toolbar">
         <div class="resumo-box">
-            <div class="resumo-item">
-                <span>Total Expedições</span>
-                <strong id="totalExp">0</strong>
-            </div>
-            <div class="resumo-item">
-                <span>Total Carros</span>
-                <strong id="totalCarros">0</strong>
-            </div>
+            <div class="resumo-item"><span>Total Expedições</span><strong id="totalExp">0</strong></div>
+            <div class="resumo-item"><span>Total Carros</span><strong id="totalCarros">0</strong></div>
         </div>
         <div style="display: flex; gap: 5px; align-items: flex-end;">
-            <div>
-                <label style="margin:0; font-size: 10px;">DE:</label>
-                <input type="date" id="filtroInicio" style="padding: 5px; width: 130px;">
-            </div>
-            <div>
-                <label style="margin:0; font-size: 10px;">ATÉ:</label>
-                <input type="date" id="filtroFim" style="padding: 5px; width: 130px;">
-            </div>
+            <div><label style="margin:0; font-size: 10px;">DE:</label><input type="date" id="filtroInicio" style="padding: 5px; width: 130px;"></div>
+            <div><label style="margin:0; font-size: 10px;">ATÉ:</label><input type="date" id="filtroFim" style="padding: 5px; width: 130px;"></div>
             <button id="btnFiltrar" style="padding: 7px 15px; cursor:pointer; background: var(--primary); color:white; border:none; border-radius:4px;">BUSCAR</button>
         </div>
     </div>
 
-    <div class="export-btns">
+    <div class="search-container">
+        <input type="text" id="inputBusca" placeholder="🔍 Buscar por Nº Expedição, Placa ou Destino...">
+    </div>
+
+    <div class="export-btns" style="margin-top: 15px;">
         <button onclick="exportarExcel()" class="btn-export btn-excel">📊 EXCEL</button>
         <button onclick="exportarPDF()" class="btn-export btn-pdf">📄 PDF</button>
     </div>
@@ -163,15 +124,15 @@
             <table id="tabelaExpedicoes">
                 <thead>
                     <tr>
-                        <th>DATA</th>
-                        <th>EXPEDIÇÃO</th>
-                        <th>PLACA</th>
-                        <th>TIPO</th>
-                        <th>DESTINO</th>
-                        <th>BOX</th>
-                        <th>PESO</th>
-                        <th>CONFERENTE</th>
-                        <th>STATUS</th>
+                        <th onclick="ordenarTabela(0)">DATA</th>
+                        <th onclick="ordenarTabela(1)">EXPEDIÇÃO</th>
+                        <th onclick="ordenarTabela(2)">PLACA</th>
+                        <th onclick="ordenarTabela(3)">TIPO</th>
+                        <th onclick="ordenarTabela(4)">DESTINO</th>
+                        <th onclick="ordenarTabela(5)">BOX</th>
+                        <th onclick="ordenarTabela(6)">PESO</th>
+                        <th onclick="ordenarTabela(7)">CONFERENTE</th>
+                        <th onclick="ordenarTabela(8)">STATUS</th>
                         <th>AÇÕES</th>
                     </tr>
                 </thead>
@@ -184,28 +145,21 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let veiculosCache = {};
+    let dadosOriginais = [];
+    let ordemDirecao = true;
 
     const obterDataLocal = () => {
         const agora = new Date();
         const offset = agora.getTimezoneOffset() * 60000;
         return new Date(agora - offset).toISOString().split('T')[0];
     };
-
-    document.getElementById('pesoExp').addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, "");
-        v = (v / 100).toFixed(2) + "";
-        v = v.replace(".", ",");
-        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-        e.target.value = v;
-    });
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -222,15 +176,90 @@
         } else { window.location.href = "index.html"; }
     });
 
+    // Função de Listagem com Cache para Busca e Ordenação
+    function listarExpedicoes(inicio, fim) {
+        const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
+        onSnapshot(q, (snap) => {
+            dadosOriginais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            // Ordenação inicial por código de expedição crescente
+            dadosOriginais.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, {numeric: true}));
+            renderizarTabela(dadosOriginais);
+        });
+    }
+
+    function renderizarTabela(lista) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+        let countExp = 0;
+        let placasUnicas = new Set();
+
+        lista.forEach(item => {
+            countExp++;
+            placasUnicas.add(item.placa + item.data);
+            const dataF = item.data.split('-').reverse().join('/');
+            corpo.innerHTML += `
+                <tr>
+                    <td>${dataF}</td>
+                    <td><strong>${item.codigo}</strong></td>
+                    <td>${item.placa}</td>
+                    <td>${item.tipo}</td>
+                    <td>${item.destino}</td>
+                    <td>${item.box}</td>
+                    <td>${item.peso}</td>
+                    <td>${item.conferente}</td>
+                    <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
+                    <td style="white-space: nowrap;">
+                        <button class="btn-acao b-sep" onclick="mudarStatus('${item.id}', 'EM SEPARAÇÃO')">SEP</button>
+                        <button class="btn-acao b-ok" onclick="mudarStatus('${item.id}', 'CONFERÊNCIA FINALIZADA')">✅</button>
+                        <button class="btn-acao btn-edit" onclick="editar('${item.id}')">✏️</button>
+                        <button class="btn-acao btn-del" onclick="excluir('${item.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+        document.getElementById('totalExp').innerText = countExp;
+        document.getElementById('totalCarros').innerText = placasUnicas.size;
+    }
+
+    // Busca em Tempo Real
+    document.getElementById('inputBusca').onkeyup = function() {
+        const termo = this.value.toLowerCase();
+        const filtrados = dadosOriginais.filter(d => 
+            d.codigo.toLowerCase().includes(termo) || 
+            d.placa.toLowerCase().includes(termo) || 
+            d.destino.toLowerCase().includes(termo)
+        );
+        renderizarTabela(filtrados);
+    };
+
+    // Ordenação de Colunas
+    window.ordenarTabela = (index) => {
+        const chaves = ['data', 'codigo', 'placa', 'tipo', 'destino', 'box', 'peso', 'conferente', 'status'];
+        const chave = chaves[index];
+        ordemDirecao = !ordemDirecao;
+
+        dadosOriginais.sort((a, b) => {
+            let valA = a[chave].toString().toLowerCase();
+            let valB = b[chave].toString().toLowerCase();
+            return ordemDirecao ? valA.localeCompare(valB, undefined, {numeric: true}) : valB.localeCompare(valA, undefined, {numeric: true});
+        });
+
+        // Atualiza ícones visualmente
+        const ths = document.querySelectorAll('th');
+        ths.forEach(th => th.className = "");
+        ths[index].className = ordemDirecao ? "sort-asc" : "sort-desc";
+
+        renderizarTabela(dadosOriginais);
+    };
+
+    // --- RESTANTE DAS FUNÇÕES (Placas, Destinos, Salvar, Status) ---
     async function carregarPlacas() {
         const snap = await getDocs(collection(db, "cad_veiculos"));
         const selectPlaca = document.getElementById('placa');
+        const veiculosCache = {};
         snap.forEach(doc => {
             const v = doc.data();
             veiculosCache[v.placa] = v.tipo;
-            const opt = document.createElement('option');
-            opt.value = v.placa; opt.textContent = v.placa;
-            selectPlaca.appendChild(opt);
+            selectPlaca.innerHTML += `<option value="${v.placa}">${v.placa}</option>`;
         });
         selectPlaca.onchange = (e) => document.getElementById('tipoVeic').value = veiculosCache[e.target.value] || "";
     }
@@ -261,60 +290,10 @@
             data: document.getElementById('dataExp').value,
             atualizadoEm: serverTimestamp()
         };
-
-        if (id) {
-            await updateDoc(doc(db, "expedicoes", id), dados);
-            alert("Atualizado!");
-        } else {
-            dados.status = "CRIADO";
-            dados.criadoEm = serverTimestamp();
-            await addDoc(collection(db, "expedicoes"), dados);
-            alert("Salvo!");
-        }
-        e.target.reset();
-        document.getElementById('editId').value = "";
-        document.getElementById('dataExp').value = obterDataLocal();
-        document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
+        if (id) { await updateDoc(doc(db, "expedicoes", id), dados); alert("Atualizado!"); }
+        else { dados.status = "CRIADO"; dados.criadoEm = serverTimestamp(); await addDoc(collection(db, "expedicoes"), dados); alert("Salvo!"); }
+        e.target.reset(); document.getElementById('editId').value = ""; document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
     };
-
-    function listarExpedicoes(inicio, fim) {
-        const q = query(collection(db, "expedicoes"), where("data", ">=", inicio), where("data", "<=", fim));
-        onSnapshot(q, (snap) => {
-            const corpo = document.getElementById('corpoTabela');
-            corpo.innerHTML = "";
-            let countExp = 0;
-            let placasUnicas = new Set();
-
-            snap.docs.sort((a,b) => b.data().data.localeCompare(a.data().data)).forEach(d => {
-                const item = d.data();
-                countExp++;
-                placasUnicas.add(item.placa + item.data);
-                const dataF = item.data.split('-').reverse().join('/');
-                
-                corpo.innerHTML += `
-                    <tr>
-                        <td>${dataF}</td>
-                        <td><strong>${item.codigo}</strong></td>
-                        <td>${item.placa}</td>
-                        <td>${item.tipo}</td>
-                        <td>${item.destino}</td>
-                        <td>${item.box}</td>
-                        <td>${item.peso}</td>
-                        <td>${item.conferente}</td>
-                        <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
-                        <td style="white-space: nowrap;">
-                            <button class="btn-acao b-sep" title="Em Separação" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
-                            <button class="btn-acao b-ok" title="Conf. Finalizada" onclick="mudarStatus('${d.id}', 'CONFERÊNCIA FINALIZADA')">✅</button>
-                            <button class="btn-acao btn-edit" onclick="editar('${d.id}')">✏️</button>
-                            <button class="btn-acao btn-del" onclick="excluir('${d.id}')">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.getElementById('totalExp').innerText = countExp;
-            document.getElementById('totalCarros').innerText = placasUnicas.size;
-        });
-    }
 
     document.getElementById('btnFiltrar').onclick = () => {
         listarExpedicoes(document.getElementById('filtroInicio').value, document.getElementById('filtroFim').value);
@@ -324,13 +303,10 @@
         if (s === 'CRIADO') return 'status-criado';
         if (s === 'EM SEPARAÇÃO') return 'status-separacao';
         if (s === 'CONFERÊNCIA FINALIZADA') return 'status-conf-finalizada';
-        if (s === 'CARREGADO/EM VIAGEM') return 'status-carregado';
-        if (s === 'FINALIZADO') return 'status-finalizado';
-        return '';
+        return 'status-finalizado';
     }
 
     window.mudarStatus = async (id, status) => await updateDoc(doc(db, "expedicoes", id), { status });
-    
     window.editar = async (id) => {
         const d = await getDoc(doc(db, "expedicoes", id));
         const data = d.data();
@@ -346,26 +322,13 @@
         document.getElementById('tituloForm').innerText = "EDITANDO EXPEDIÇÃO";
         window.scrollTo({top: 0, behavior: 'smooth'});
     };
-
     window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
     document.getElementById('btnSair').onclick = () => signOut(auth);
 
+    // Exportações
     window.exportarExcel = () => {
         const wb = XLSX.utils.table_to_book(document.getElementById('tabelaExpedicoes'));
-        XLSX.writeFile(wb, `Expedicoes_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
-    };
-
-    window.exportarPDF = () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
-        doc.text("Relatório de Expedições - Móveis Simonetti", 14, 15);
-        doc.autoTable({ 
-            html: '#tabelaExpedicoes',
-            startY: 20,
-            theme: 'grid',
-            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] 
-        });
-        doc.save(`Expedicoes_Simonetti_${new Date().toLocaleDateString()}.pdf`);
+        XLSX.writeFile(wb, `Expedicoes_${new Date().toLocaleDateString()}.xlsx`);
     };
 </script>
 </body>
