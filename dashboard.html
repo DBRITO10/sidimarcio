@@ -3,179 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Expedição Simonetti</title>
+    <title>Dashboard Logística - Simonetti</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #d32f2f;
-            --bg-body: #fdf2f2;
-            --bg-card: #ffffff;
-            --border: #f0d8d8;
-            --text: #333;
-        }
-
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; color: var(--text); }
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
         
-        header { 
-            background: var(--primary); color: white; padding: 15px; 
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .container { padding: 15px; max-width: 1200px; margin: auto; }
-
-        /* Grid de Gráficos */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card { 
-            background: white; padding: 15px; border-radius: 8px; 
-            border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .card h3 { margin-top: 0; font-size: 16px; color: var(--primary); text-align: center; }
-
-        /* Tabela Responsiva */
-        .table-container { overflow-x: auto; margin-top: 20px; background: white; border-radius: 8px; }
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
         
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: var(--primary); color: white; padding: 12px; text-align: left; font-size: 13px; }
-        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        /* Filtros e Indicadores */
+        .top-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card-meta { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; border-bottom: 4px solid var(--primary); }
+        .card-meta h2 { margin: 5px 0; color: var(--primary); font-size: 24px; }
+        .card-meta span { font-size: 12px; font-weight: bold; color: #666; text-transform: uppercase; }
 
-        .badge {
-            padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px;
-        }
-        .status-separacao { background: #ef6c00; }
-        .status-finalizado { background: #1b5e20; }
+        .filtros-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .filtros-box div { flex: 1; min-width: 150px; }
+        .filtros-box label { font-size: 11px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .filtros-box input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-update { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .resumo-topo {
-            text-align: center; margin: 20px 0;
-        }
-        .resumo-topo span {
-            border: 2px solid var(--primary); padding: 8px 20px; border-radius: 20px;
-            font-weight: bold; color: var(--primary);
-        }
+        /* Gráficos */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-card h3 { font-size: 14px; color: #555; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 
-        canvas { max-height: 250px; }
+        .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 10px; background: #f8f8f8; color: #666; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .badge { padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .status-viagem { background: #e3f2fd; color: #1565c0; }
+        .status-finalizado { background: #e8f5e9; color: #2e7d32; }
     </style>
 </head>
 <body>
 
 <header>
-    <div>EXPEDIÇÃO MÓVEIS SIMONETTI</div>
-    <a href="cadastro-expedicao.html" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 10px; border-radius: 4px; font-size: 12px;">+ NOVA CARGA</a>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Dashboard Operacional</span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
 </header>
 
 <div class="container">
-    <div class="resumo-topo">
-        <span id="totalIndicador">CARREGANDO DADOS...</span>
+    <div class="filtros-box">
+        <div>
+            <label>INÍCIO DO MÊS</label>
+            <input type="date" id="dataInicio">
+        </div>
+        <div>
+            <label>ATÉ HOJE</label>
+            <input type="date" id="dataFim">
+        </div>
+        <button class="btn-update" id="btnFiltrar">ATUALIZAR DADOS</button>
+    </div>
+
+    <div class="top-bar">
+        <div class="card-meta">
+            <span id="labelCargas">Total de Veículos</span>
+            <h2 id="totalVeiculos">0</h2>
+        </div>
+        <div class="card-meta">
+            <span>Expedições Geradas</span>
+            <h2 id="totalExp">0</h2>
+        </div>
+        <div class="card-meta">
+            <span>Peso Total (Ton)</span>
+            <h2 id="totalPeso">0</h2>
+        </div>
     </div>
 
     <div class="charts-grid">
-        <div class="card">
-            <h3>STATUS DAS EXPEDIÇÕES</h3>
-            <canvas id="chartStatus"></canvas>
+        <div class="chart-card">
+            <h3>DISTRIBUIÇÃO POR DESTINO</h3>
+            <canvas id="chartDestino"></canvas>
         </div>
-        <div class="card">
-            <h3>VEÍCULOS (CARGAS)</h3>
-            <canvas id="chartVeiculos"></canvas>
+        <div class="chart-card">
+            <h3>CARGAS POR TIPO DE VEÍCULO</h3>
+            <canvas id="chartTipos"></canvas>
         </div>
     </div>
 
-    <div class="card table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>DATA</th>
-                    <th>EXPEDIÇÃO</th>
-                    <th>PLACA</th>
-                    <th>DESTINO</th>
-                    <th>STATUS</th>
-                    <th>PESO</th>
-                </tr>
-            </thead>
-            <tbody id="tabelaCorpo">
-                </tbody>
-        </table>
+    <div class="table-card">
+        <h3>MOVIMENTAÇÕES RECENTES</h3>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATA</th>
+                        <th>EXPEDIÇÃO</th>
+                        <th>PLACA</th>
+                        <th>DESTINO</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="listaRecentes">
+                    </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script type="module">
-    import { db, collection } from './firebase-config.js';
-    import { query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const tabelaCorpo = document.getElementById('tabelaCorpo');
-    const totalIndicador = document.getElementById('totalIndicador');
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Variáveis para os Gráficos
-    let chartStatus, chartVeiculos;
+    // Inicializar datas (1º dia do mês até hoje)
+    const hoje = new Date();
+    document.getElementById('dataInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
 
-    // Função para atualizar ou criar os gráficos
-    function atualizarGraficos(dados) {
-        const countsStatus = { "EM SEPARAÇÃO": 0, "FINALIZADO": 0 };
-        const countsVeiculos = { "CARRETTA": 0, "TRUCK": 0, "3/4": 0 };
+    let chart1, chart2;
 
-        dados.forEach(doc => {
+    onAuthStateChanged(auth, user => { if(user) carregarDashboard(); else window.location.href="index.html"; });
+
+    async function carregarDashboard() {
+        const dIni = new Date(document.getElementById('dataInicio').value + "T00:00:00");
+        const dFim = new Date(document.getElementById('dataFim').value + "T23:59:59");
+
+        const q = query(collection(db, "expedicoes"), 
+                  where("criadoEm", ">=", Timestamp.fromDate(dIni)),
+                  where("criadoEm", "<=", Timestamp.fromDate(dFim)),
+                  orderBy("criadoEm", "desc"));
+        
+        const snap = await getDocs(q);
+        
+        let resumo = { exp: 0, peso: 0, destinos: {}, tipos: {}, placas: new Set() };
+        const corpo = document.getElementById('listaRecentes');
+        corpo.innerHTML = "";
+
+        snap.forEach(doc => {
             const d = doc.data();
-            countsStatus[d.status] = (countsStatus[d.status] || 0) + 1;
-            countsVeiculos[d.veiculo_tipo] = (countsVeiculos[d.veiculo_tipo] || 0) + 1;
-        });
+            resumo.exp++;
+            resumo.peso += (d.peso || 0);
+            resumo.placas.add(d.placa);
+            
+            // Contagem para gráficos
+            resumo.destinos[d.destino] = (resumo.destinos[d.destino] || 0) + 1;
+            resumo.tipos[d.tipo] = (resumo.tipos[d.tipo] || 0) + 1;
 
-        // Gráfico Status
-        const ctxStatus = document.getElementById('chartStatus').getContext('2d');
-        if(chartStatus) chartStatus.destroy();
-        chartStatus = new Chart(ctxStatus, {
-            type: 'pie',
-            data: {
-                labels: Object.keys(countsStatus),
-                datasets: [{ data: Object.values(countsStatus), backgroundColor: ['#ef6c00', '#1b5e20', '#0288d1'] }]
+            // Preencher Tabela (apenas os últimos 10)
+            if (corpo.children.length < 10) {
+                corpo.innerHTML += `
+                    <tr>
+                        <td>${d.data}</td>
+                        <td>${d.codigo}</td>
+                        <td><strong>${d.placa}</strong></td>
+                        <td>${d.destino}</td>
+                        <td><span class="badge ${d.status === 'FINALIZADO' ? 'status-finalizado' : 'status-viagem'}">${d.status}</span></td>
+                    </tr>
+                `;
             }
         });
 
-        // Gráfico Veículos
-        const ctxVeic = document.getElementById('chartVeiculos').getContext('2d');
-        if(chartVeiculos) chartVeiculos.destroy();
-        chartVeiculos = new Chart(ctxVeic, {
+        // Atualizar Indicadores
+        document.getElementById('totalVeiculos').innerText = resumo.placas.size;
+        document.getElementById('totalExp').innerText = resumo.exp;
+        document.getElementById('totalPeso').innerText = (resumo.peso / 1000).toFixed(1);
+
+        renderizarGraficos(resumo);
+    }
+
+    function renderizarGraficos(dados) {
+        if(chart1) chart1.destroy();
+        if(chart2) chart2.destroy();
+
+        // Gráfico de Destinos (Barras)
+        chart1 = new Chart(document.getElementById('chartDestino'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dados.destinos),
+                datasets: [{ label: 'Cargas', data: Object.values(dados.destinos), backgroundColor: '#d32f2f' }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        // Gráfico de Tipos de Veículo (Pizza)
+        chart2 = new Chart(document.getElementById('chartTipos'), {
             type: 'doughnut',
             data: {
-                labels: Object.keys(countsVeiculos),
-                datasets: [{ data: Object.values(countsVeiculos), backgroundColor: ['#2e7d32', '#455a64', '#7b1fa2'] }]
+                labels: Object.keys(dados.tipos),
+                datasets: [{ data: Object.values(dados.tipos), backgroundColor: ['#2e7d32', '#1565c0', '#fbc02d', '#6a1b9a', '#ef6c00'] }]
             }
         });
     }
 
-    // Escutar dados em tempo real
-    const q = query(collection(db, "expedicoes"), orderBy("criadoEm", "desc"));
-    
-    onSnapshot(q, (snapshot) => {
-        tabelaCorpo.innerHTML = "";
-        let totalExp = snapshot.size;
-        let placasUnicas = new Set();
-
-        snapshot.forEach((doc) => {
-            const item = doc.data();
-            placasUnicas.add(item.placa);
-
-            const row = `
-                <tr>
-                    <td>${item.data}</td>
-                    <td>${item.codigo}</td>
-                    <td>${item.placa}</td>
-                    <td>${item.destino}</td>
-                    <td><span class="badge ${item.status === 'FINALIZADO' ? 'status-finalizado' : 'status-separacao'}">${item.status}</span></td>
-                    <td>${item.peso.toLocaleString('pt-BR')} kg</td>
-                </tr>
-            `;
-            tabelaCorpo.innerHTML += row;
-        });
-
-        totalIndicador.innerText = `CARGAS: ${placasUnicas.size} | EXPEDIÇÕES: ${totalExp}`;
-        atualizarGraficos(snapshot);
-    });
+    document.getElementById('btnFiltrar').onclick = carregarDashboard;
+    document.getElementById('btnSair').onclick = () => signOut(auth);
 </script>
-
 </body>
 </html>
