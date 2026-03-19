@@ -6,44 +6,45 @@
     <title>Configurar Perfil - Simonetti</title>
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-body); padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: var(--primary); margin-top: 0; text-align: center; }
-        p { text-align: center; color: #666; font-size: 14px; }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; text-transform: uppercase; font-size: 20px; }
+        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        input:focus { border-color: var(--primary); outline: none; }
-        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
-        .btn-salvar:hover { background: #b71c1c; }
-        .loading-select { font-style: italic; color: #888; font-size: 12px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #fafafa; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; }
+        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-salvar:hover { background: #b71c1c; transform: translateY(-1px); }
+        .btn-salvar:disabled { background: #ccc; cursor: not-allowed; }
+        #msgInfo { text-align: center; font-size: 11px; color: #888; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Bem-vindo!</h2>
-    <p>Olá! Defina seus dados de acesso para começar no sistema.</p>
+    <h2>Configuração Inicial</h2>
+    <p>Complete seus dados para acessar o sistema.</p>
     
     <form id="formPerfil">
-        <label>Nome</label>
-        <input type="text" id="nomeUser" placeholder="Ex: Douglas Brito" required>
+        <label>Nome de Usuário</label>
+        <input type="text" id="nomeUser" placeholder="Digite seu nome completo" required>
 
-        <label>Definir Nova Senha</label>
+        <label>Nova Senha de Acesso</label>
         <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required minlength="6">
 
         <label>Tipo de Função</label>
         <select id="funcaoUser" required>
-            <option value="" disabled selected>Selecione...</option>
+            <option value="" disabled selected>Selecione sua função...</option>
             <option value="leitor">Leitor</option>
         </select>
 
-        <label>Vínculo / Central</label>
+        <label>Sua Central (Origem/Vínculo)</label>
         <select id="centralUser" required>
             <option value="" disabled selected>Carregando centrais...</option>
         </select>
-        <span id="loadMsg" class="loading-select"></span>
 
         <button type="submit" id="btnFinalizar" class="btn-salvar">FINALIZAR E ENTRAR</button>
+        <span id="msgInfo">Aguardando preenchimento...</span>
     </form>
 </div>
 
@@ -64,76 +65,78 @@
 
     let currentUser = null;
 
-    // 1. Monitorar Usuário e Carregar Centrais do Banco
+    // Monitora login e carrega centrais dinâmicas da coleção 'destinos'
     onAuthStateChanged(auth, async (user) => {
         if (user) { 
             currentUser = user; 
-            await carregarCentrais();
+            await carregarCentraisDoBanco();
         } else { 
             window.location.href = "index.html"; 
         }
     });
 
-    // Função para buscar as centrais cadastradas na sua coleção "centrais"
-    async function carregarCentrais() {
+    async function carregarCentraisDoBanco() {
         const select = document.getElementById('centralUser');
         try {
-            const querySnapshot = await getDocs(collection(db, "centrais"));
-            select.innerHTML = '<option value="" disabled selected>Selecione a Central</option>';
+            // Conecta na coleção 'destinos' conforme solicitado
+            const querySnapshot = await getDocs(collection(db, "destinos"));
+            select.innerHTML = '<option value="" disabled selected>Selecione sua Central</option>';
             
             if(querySnapshot.empty) {
-                // Caso não tenha nada no banco ainda, ele cria opções padrão
-                const padrao = ["MATRIZ", "SERRA 113", "CONQUISTA", "BURAREMA"];
+                // Fallback caso a coleção esteja vazia momentaneamente
+                const padrao = ["MATRIZ", "SERRA 113", "CONQUISTA", "BUERAREMA"];
                 padrao.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
             } else {
                 querySnapshot.forEach((doc) => {
                     const dados = doc.data();
-                    // Assume que o campo no banco chama-se 'nome'
-                    select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
+                    // Pega o campo 'nome' dentro do documento de destino
+                    if(dados.nome) {
+                        select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
+                    }
                 });
             }
         } catch (error) {
-            console.error("Erro centrais:", error);
-            document.getElementById('loadMsg').innerText = "Erro ao carregar centrais.";
+            console.error("Erro ao carregar destinos:", error);
+            document.getElementById('msgInfo').innerText = "Erro ao carregar lista de centrais.";
         }
     }
 
-    // 2. Salvar Dados e Atualizar Senha
     document.getElementById('formPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnFinalizar');
         const novaSenha = document.getElementById('novaSenha').value;
+        const msg = document.getElementById('msgInfo');
         
-        btn.innerText = "SALVANDO...";
+        btn.innerText = "PROCESSANDO...";
         btn.disabled = true;
 
         try {
-            // Passo A: Atualizar a senha no Firebase Auth
+            // 1. Atualiza a senha no Firebase Authentication
             await updatePassword(currentUser, novaSenha);
 
-            // Passo B: Salvar perfil no Firestore
+            // 2. Salva ou atualiza os dados na coleção 'usuarios'
             await setDoc(doc(db, "usuarios", currentUser.uid), {
                 nome: document.getElementById('nomeUser').value.toUpperCase(),
                 funcao: document.getElementById('funcaoUser').value,
                 central: document.getElementById('centralUser').value,
                 email: currentUser.email,
-                nivel: "user", // Nível padrão
-                primeiroAcesso: false,
-                dataCadastro: new Date().toISOString()
-            });
+                nivel: "user", // Adm deve ser alterado manualmente no console
+                dataConfiguracao: new Date().toISOString()
+            }, { merge: true });
 
-            alert("Perfil e senha configurados com sucesso!");
-            window.location.href = "dashboard.html"; // Manda para o painel principal
+            alert("Cadastro finalizado com sucesso!");
+            window.location.href = "dashboard.html";
 
         } catch (error) {
             console.error(error);
-            if (error.code === 'auth/requires-recent-login') {
-                alert("Por segurança, saia e entre novamente para mudar a senha.");
-            } else {
-                alert("Erro ao finalizar cadastro: " + error.message);
-            }
-            btn.innerText = "FINALIZAR E ENTRAR";
             btn.disabled = false;
+            btn.innerText = "FINALIZAR E ENTRAR";
+            
+            if (error.code === 'auth/requires-recent-login') {
+                alert("Sessão expirada. Por favor, saia e entre novamente para definir sua senha.");
+            } else {
+                alert("Erro ao salvar: " + error.message);
+            }
         }
     });
 </script>
