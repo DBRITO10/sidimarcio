@@ -3,16 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Carregamento e Qualidade - Simonetti</title>
+    <title>Relatório de Qualidade - Simonetti</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
         
-        header { background: var(--primary); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        /* Cabeçalho alinhado conforme solicitado */
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 12px 25px; 
+            display: grid; 
+            grid-template-columns: 1fr auto 1fr; 
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000;
+        }
+
+        .user-info { font-weight: 600; font-size: 14px; text-align: left; }
+        .header-title { font-size: 20px; font-weight: 800; text-transform: uppercase; text-align: center; }
+        .header-right { text-align: right; }
+
+        .btn-sair {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            padding: 6px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+        .btn-sair:hover { background: #fff; color: var(--primary); }
 
         .container { padding: 20px; max-width: 1200px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -22,53 +49,52 @@
         .filtros input, .filtros select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
 
         .btn { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
-        .btn-search { background: var(--primary); width: 100%; }
+        .btn-search { background: var(--primary); }
         .btn-excel { background: #1b5e20; }
 
         table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th { background: #f8f9fa; padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 12px; text-transform: uppercase; color: #444; }
+        th { background: #f8f9fa; padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 12px; color: #444; }
         td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: top; }
         
         .status-ok { color: var(--success); font-weight: bold; }
         .status-avaria { color: var(--danger); font-weight: bold; }
-        
         .detalhe-avaria { font-size: 11px; background: #fff5f5; border: 1px solid #ffcdd2; padding: 5px; border-radius: 4px; margin-top: 5px; color: #b71c1c; }
-        .equipe-tag { display: inline-block; background: #eceff1; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 3px; margin-bottom: 3px; border: 1px solid #cfd8dc; }
+        .equipe-tag { display: inline-block; background: #eceff1; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 3px; border: 1px solid #cfd8dc; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="header-left">
-        <a href="menu.html" class="btn-back">⬅️</a>
-        <span style="font-weight: 800;">CONTROLE DE QUALIDADE CARREGAMENTO</span>
+    <div class="user-info">Olá, <strong id="userName">...</strong></div>
+    <div class="header-title">Controle de Qualidade</div>
+    <div class="header-right">
+        <button class="btn-sair" onclick="window.location.href='menu.html'">VOLTAR</button>
     </div>
-    <span id="userName" style="font-size: 12px; opacity: 0.9;">...</span>
 </header>
 
 <div class="container">
     <div class="card">
         <div class="filtros">
             <div>
-                <label>DATA INICIAL</label>
+                <label>INÍCIO</label>
                 <input type="date" id="dataInicio">
             </div>
             <div>
-                <label>DATA FINAL</label>
+                <label>FIM</label>
                 <input type="date" id="dataFim">
             </div>
             <div>
-                <label>FILTRAR POR EQUIPE</label>
-                <select id="filtroEquipe">
-                    <option value="TODOS">TODAS AS EQUIPES</option>
+                <label>VÍNCULO DA EQUIPE</label>
+                <select id="filtroVinculo">
+                    <option value="TODOS">TODOS</option>
+                    <option value="MEI">SÓ MEI</option>
+                    <option value="TERCEIRO">SÓ TERCEIRO</option>
                 </select>
             </div>
             <button class="btn btn-search" id="btnFiltrar">ATUALIZAR RELATÓRIO</button>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button class="btn btn-excel" id="btnExportExcel">📊 BAIXAR PLANILHA (AVARIAS)</button>
-        </div>
+        <button class="btn btn-excel" id="btnExportExcel">📊 EXPORTAR EXCEL</button>
 
         <div style="overflow-x: auto;">
             <table id="tabelaQualidade">
@@ -78,8 +104,8 @@
                         <th>EXPEDIÇÃO</th>
                         <th>DESTINO</th>
                         <th>PLACA / PESO</th>
-                        <th>EQUIPE CARREGAMENTO</th>
-                        <th>SITUAÇÃO CARGA</th>
+                        <th>EQUIPE (VÍNCULO)</th>
+                        <th>SITUAÇÃO / AVARIA</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
@@ -92,38 +118,37 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Configuração inicial das datas
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('dataInicio').value = hoje;
     document.getElementById('dataFim').value = hoje;
 
-    async function carregarFiltroEquipe() {
-        const snap = await getDocs(collection(db, "equipe"));
-        const select = document.getElementById('filtroEquipe');
-        snap.forEach(doc => {
-            const opt = document.createElement('option');
-            opt.value = doc.data().nome;
-            opt.innerText = doc.data().nome;
-            select.appendChild(opt);
-        });
-    }
+    onAuthStateChanged(auth, user => {
+        if(user) document.getElementById('userName').innerText = user.email.split('@')[0].toUpperCase();
+    });
 
     async function carregarRelatorio() {
         const dIni = document.getElementById('dataInicio').value;
         const dFim = document.getElementById('dataFim').value;
-        const equipeFiltro = document.getElementById('filtroEquipe').value;
+        const vinculoFiltro = document.getElementById('filtroVinculo').value;
         const corpo = document.getElementById('corpoTabela');
         
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando dados no sistema...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Processando dados...</td></tr>';
 
         try {
-            // 1. Pegar todas as avarias registradas para cruzar dados
+            // 1. Mapeia Vínculos dos Colaboradores
+            const equipeSnap = await getDocs(collection(db, "equipe"));
+            let vinculos = {};
+            equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo);
+
+            // 2. Mapeia Avarias
             const avariasSnap = await getDocs(collection(db, "avarias"));
             let mapaAvarias = {};
             avariasSnap.forEach(doc => {
@@ -132,78 +157,66 @@
                 mapaAvarias[av.expedicaoId].push(av);
             });
 
-            // 2. Pegar expedições no período
-            // Nota: Dependendo da sua estrutura, você pode filtrar por data de cadastro ou fimCarregamento
-            const expRef = collection(db, "expedicoes");
-            const q = query(expRef, orderBy("data", "desc")); // Ajuste o campo de data conforme seu banco
-            const expSnap = await getDocs(q);
+            // 3. Busca Expedições
+            const expSnap = await getDocs(query(collection(db, "expedicoes"), orderBy("data", "desc")));
 
             corpo.innerHTML = "";
             let encontrou = false;
 
             expSnap.forEach(docExp => {
                 const exp = docExp.data();
-                const dataExp = exp.data; // Formato DD/MM/YYYY do seu sistema
-                
-                // Conversão simples para filtro de data (ajuste se seu campo for Timestamp)
-                const partesData = dataExp.split('/');
-                const dataFormatada = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
+                const partes = exp.data.split('/');
+                const dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
                 
                 if (dataFormatada >= dIni && dataFormatada <= dFim) {
                     const equipe = exp.equipe_carregamento || [];
                     
-                    // Filtro de Equipe
-                    if (equipeFiltro !== "TODOS" && !equipe.includes(equipeFiltro)) return;
+                    // Lógica do Filtro de Vínculo: Se algum membro da equipe bater com o filtro
+                    const equipeInfo = equipe.map(nome => {
+                        const v = vinculos[nome] || "TERCEIRO";
+                        return { nome, vinculo: v };
+                    });
+
+                    if (vinculoFiltro !== "TODOS") {
+                        const temNoFiltro = equipeInfo.some(e => e.vinculo === vinculoFiltro);
+                        if (!temNoFiltro) return;
+                    }
 
                     encontrou = true;
-                    const idExp = docExp.id;
-                    const temAvaria = mapaAvarias[idExp];
+                    const temAvaria = mapaAvarias[docExp.id];
+                    const equipeHtml = equipeInfo.map(e => `<span class="equipe-tag">${e.nome} (${e.vinculo})</span>`).join('');
 
-                    // Formatação da Equipe em Tags
-                    const equipeHtml = equipe.map(nome => `<span class="equipe-tag">${nome}</span>`).join('');
-
-                    // Formatação da Avaria
-                    let avariaHtml = '<span class="status-ok">✅ CARGA OK</span>';
+                    let avariaHtml = '<span class="status-ok">✅ OK</span>';
                     if (temAvaria) {
-                        avariaHtml = '<span class="status-avaria">⚠️ AVARIA DETECTADA</span>';
+                        avariaHtml = '<span class="status-avaria">⚠️ AVARIA</span>';
                         temAvaria.forEach(a => {
-                            avariaHtml += `
-                                <div class="detalhe-avaria">
-                                    <strong>Qtd: ${a.quantidade}</strong> | ${a.descricao}<br>
-                                    <small>Ref: ${a.codigoProduto}</small>
-                                </div>`;
+                            avariaHtml += `<div class="detalhe-avaria"><strong>${a.quantidade}x</strong> ${a.descricao}</div>`;
                         });
                     }
 
                     corpo.innerHTML += `
                         <tr>
-                            <td>${dataExp}</td>
+                            <td>${exp.data}</td>
                             <td><strong>${exp.expedicao}</strong></td>
                             <td>${exp.destino}</td>
-                            <td>${exp.placa}<br><small>${exp.peso?.toLocaleString()} kg</small></td>
+                            <td>${exp.placa}<br><small>${exp.peso || 0}kg</small></td>
                             <td>${equipeHtml}</td>
                             <td>${avariaHtml}</td>
-                        </tr>
-                    `;
+                        </tr>`;
                 }
             });
 
-            if (!encontrou) corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma carga encontrada para este período.</td></tr>';
-
-        } catch (error) {
-            console.error(error);
-            corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Erro ao carregar dados. Verifique os índices do Firestore.</td></tr>';
+            if (!encontrou) corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Sem dados para este filtro.</td></tr>';
+        } catch (e) {
+            console.error(e);
+            corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Erro ao carregar.</td></tr>';
         }
     }
 
     document.getElementById('btnFiltrar').onclick = carregarRelatorio;
     document.getElementById('btnExportExcel').onclick = () => {
-        const table = document.getElementById("tabelaQualidade");
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `Qualidade_Carregamento_Simonetti.xlsx`);
+        XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("tabelaQualidade")), "Relatorio_Qualidade.xlsx");
     };
-
-    carregarFiltroEquipe();
 </script>
 </body>
 </html>
