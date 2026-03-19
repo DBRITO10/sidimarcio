@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Conferentes - Simonetti</title>
+    <style>
+        /* (Mesmo estilo da página anterior para manter padrão) */
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { width: 100%; background: #1565c0; color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        td, th { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn-acao { border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Gestão de Conferentes</span>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2 id="tituloForm">CADASTRAR CONFERENTE</h2>
+        <form id="formConf">
+            <input type="hidden" id="editId">
+            <label>NOME COMPLETO</label>
+            <input type="text" id="nomeConf" required style="text-transform: uppercase;">
+            <label>MATRÍCULA / CPF</label>
+            <input type="text" id="idConf" placeholder="Identificação" required>
+            <button type="submit" class="btn-save">SALVAR CONFERENTE</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>CONFERENTES ATIVOS</h2>
+        <table>
+            <thead><tr><th>NOME</th><th>ID</th><th>AÇÕES</th></tr></thead>
+            <tbody id="corpoConf"></tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('formConf');
+    
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const dados = { nome: document.getElementById('nomeConf').value.toUpperCase(), matricula: document.getElementById('idConf').value };
+
+        if(id) await updateDoc(doc(db, "conferentes", id), dados);
+        else await addDoc(collection(db, "conferentes"), dados);
+        
+        form.reset();
+        document.getElementById('editId').value = "";
+    };
+
+    onSnapshot(query(collection(db, "conferentes"), orderBy("nome")), snap => {
+        const corpo = document.getElementById('corpoConf');
+        corpo.innerHTML = "";
+        snap.forEach(d => {
+            corpo.innerHTML += `
+                <tr>
+                    <td>${d.data().nome}</td>
+                    <td>${d.data().matricula}</td>
+                    <td>
+                        <button class="btn-acao" style="background:#fbc02d" onclick="editar('${d.id}')">✏️</button>
+                        <button class="btn-acao" style="background:#ffcdd2" onclick="excluir('${d.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+    });
+
+    window.editar = async (id) => {
+        const d = await getDoc(doc(db, "conferentes", id));
+        document.getElementById('editId').value = id;
+        document.getElementById('nomeConf').value = d.data().nome;
+        document.getElementById('idConf').value = d.data().matricula;
+    };
+
+    window.excluir = async (id) => {
+        if(confirm("Excluir conferente?")) await deleteDoc(doc(db, "conferentes", id));
+    };
+</script>
+</body>
+</html>
