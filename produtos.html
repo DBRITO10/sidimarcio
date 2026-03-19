@@ -5,52 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Produtos - Simonetti</title>
     <style>
-        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 20px; }
-        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .busca { margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; font-size: 14px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        .btn-edit { color: blue; cursor: pointer; margin-right: 10px; }
-        .btn-del { color: red; cursor: pointer; }
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
+        
+        /* Cabeçalho Padronizado */
+        header { 
+            background: var(--primary); color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; }
+        .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        h2, h3 { color: var(--primary); margin-top: 0; font-size: 18px; }
+        
+        input { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: 0.3s; }
+        .btn-add:hover { background: #b71c1c; }
+
+        /* Tabela Responsiva */
+        .table-wrapper { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        .btn-edit { color: #fbc02d; cursor: pointer; margin-right: 15px; font-size: 18px; }
+        .btn-del { color: #f44336; cursor: pointer; font-size: 18px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            header { padding: 10px; }
+            span { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <a href="menu.html" style="text-decoration: none;">⬅ VOLTAR</a>
-    <h2 style="color: var(--primary); margin:0;">Produtos</h2>
-    <div></div>
+    <div class="header-left">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Olá, <strong id="userName">...</strong></span>
+    </div>
+    <button class="btn-sair" id="btnSair">SAIR</button>
 </header>
 
-<div class="card">
-    <h3>Novo Produto</h3>
-    <input type="text" id="prodCodigo" placeholder="Código do Produto">
-    <input type="text" id="prodNome" placeholder="Descrição/Nome">
-    <button class="btn-add" id="btnSalvar">SALVAR PRODUTO</button>
-</div>
+<div class="container">
+    <div class="card">
+        <h3>📦 Gerenciar Lista de Produtos</h3>
+        <p style="font-size: 12px; color: #666;">Cadastre ou edite produtos para que apareçam na conferência.</p>
+        <input type="text" id="prodCodigo" placeholder="Código do Produto (Ex: 1010)">
+        <input type="text" id="prodNome" placeholder="Descrição / Nome do Produto">
+        <button class="btn-add" id="btnSalvar">SALVAR PRODUTO</button>
+    </div>
 
-<div class="card" style="margin-top: 20px; max-width: 800px;">
-    <input type="text" id="inputBusca" placeholder="🔍 Buscar por código ou nome..." onkeyup="filtrar()">
-    <table id="tabelaProdutos">
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Descrição</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="listaProdutos"></tbody>
-    </table>
+    <div class="card">
+        <input type="text" id="inputBusca" placeholder="🔍 Buscar por código ou nome..." onkeyup="filtrar()">
+        <div class="table-wrapper">
+            <table id="tabelaProdutos">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaProdutos">
+                    <tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando lista...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
@@ -60,19 +94,38 @@
     let produtos = [];
     let editandoId = null;
 
+    // Autenticação e Carregamento de Nome
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) {
+                document.getElementById('userName').innerText = userDoc.data().nome.split(' ')[0].toUpperCase();
+                carregarProdutos();
+            }
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+
     async function carregarProdutos() {
         const snap = await getDocs(collection(db, "produtos_lista"));
         produtos = [];
         const tbody = document.getElementById('listaProdutos');
         tbody.innerHTML = "";
+        
+        if (snap.empty) {
+            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Nenhum produto cadastrado.</td></tr>";
+            return;
+        }
+
         snap.forEach(d => {
             const p = { id: d.id, ...d.data() };
             produtos.push(p);
             tbody.innerHTML += `
                 <tr>
-                    <td>${p.codigo}</td>
+                    <td><strong>${p.codigo}</strong></td>
                     <td>${p.nome}</td>
-                    <td>
+                    <td style="text-align: center;">
                         <span class="btn-edit" onclick="editarProduto('${p.id}', '${p.codigo}', '${p.nome}')">✏️</span>
                         <span class="btn-del" onclick="excluirProduto('${p.id}', '${p.codigo}')">🗑️</span>
                     </td>
@@ -81,26 +134,47 @@
     }
 
     document.getElementById('btnSalvar').onclick = async () => {
-        const cod = document.getElementById('prodCodigo').value;
-        const nome = document.getElementById('prodNome').value;
-        if(!cod || !nome) return alert("Preencha tudo");
+        const cod = document.getElementById('prodCodigo').value.trim();
+        const nome = document.getElementById('prodNome').value.trim();
+        const btn = document.getElementById('btnSalvar');
 
-        if(editandoId) {
-            await updateDoc(doc(db, "produtos_lista", editandoId), { codigo: cod, nome: nome.toUpperCase() });
-            await registrarHistorico(`EDITOU PRODUTO: ${cod}`);
-            editandoId = null;
-        } else {
-            await addDoc(collection(db, "produtos_lista"), { codigo: cod, nome: nome.toUpperCase() });
-            await registrarHistorico(`CADASTROU PRODUTO: ${cod}`);
+        if(!cod || !nome) return alert("Por favor, preencha o código e o nome do produto.");
+
+        btn.disabled = true;
+        btn.innerText = "PROCESSANDO...";
+
+        try {
+            if(editandoId) {
+                await updateDoc(doc(db, "produtos_lista", editandoId), { 
+                    codigo: cod, 
+                    nome: nome.toUpperCase() 
+                });
+                await registrarHistorico(`EDITOU PRODUTO: ${cod}`);
+                editandoId = null;
+                btn.style.background = "var(--primary)";
+                btn.innerText = "SALVAR PRODUTO";
+            } else {
+                await addDoc(collection(db, "produtos_lista"), { 
+                    codigo: cod, 
+                    nome: nome.toUpperCase() 
+                });
+                await registrarHistorico(`CADASTROU PRODUTO: ${cod}`);
+            }
+            
+            document.getElementById('prodCodigo').value = "";
+            document.getElementById('prodNome').value = "";
+            carregarProdutos();
+            alert("Sucesso!");
+        } catch (e) {
+            alert("Erro ao salvar.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = editandoId ? "ATUALIZAR PRODUTO" : "SALVAR PRODUTO";
         }
-        
-        document.getElementById('prodCodigo').value = "";
-        document.getElementById('prodNome').value = "";
-        carregarProdutos();
     };
 
     window.excluirProduto = async (id, cod) => {
-        if(confirm("Excluir produto?")) {
+        if(confirm(`Deseja excluir o produto ${cod}?`)) {
             await deleteDoc(doc(db, "produtos_lista", id));
             await registrarHistorico(`EXCLUIU PRODUTO: ${cod}`);
             carregarProdutos();
@@ -111,7 +185,10 @@
         document.getElementById('prodCodigo').value = cod;
         document.getElementById('prodNome').value = nome;
         editandoId = id;
-        window.scrollTo(0,0);
+        const btn = document.getElementById('btnSalvar');
+        btn.innerText = "ATUALIZAR PRODUTO";
+        btn.style.background = "#2e7d32"; // Muda para verde para indicar edição
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     async function registrarHistorico(acao) {
@@ -127,11 +204,15 @@
         const termo = document.getElementById('inputBusca').value.toLowerCase();
         const linhas = document.querySelectorAll('#listaProdutos tr');
         linhas.forEach(l => {
-            l.style.display = l.innerText.toLowerCase().includes(termo) ? "" : "none";
+            if(l.cells.length > 1) {
+                l.style.display = l.innerText.toLowerCase().includes(termo) ? "" : "none";
+            }
         });
     };
 
-    carregarProdutos();
+    document.getElementById('btnSair').onclick = () => signOut(auth);
+    window.editarProduto = editarProduto;
+    window.excluirProduto = excluirProduto;
 </script>
 </body>
 </html>
