@@ -10,65 +10,70 @@
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --danger: #c62828; --success: #2e7d32; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
         
-        /* Cabeçalho alinhado conforme solicitado */
         header { 
             background: var(--primary); 
             color: white; 
-            padding: 12px 25px; 
-            display: grid; 
-            grid-template-columns: 1fr auto 1fr; 
+            padding: 10px 20px; 
+            display: flex; 
+            justify-content: space-between; 
             align-items: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: sticky; top: 0; z-index: 1000;
         }
 
-        .user-info { font-weight: 600; font-size: 14px; text-align: left; }
-        .header-title { font-size: 20px; font-weight: 800; text-transform: uppercase; text-align: center; }
-        .header-right { text-align: right; }
+        .header-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .header-center { flex: 2; text-align: center; }
+        .header-right { flex: 1; text-align: right; }
 
-        .btn-sair {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid #ffffff;
-            color: #ffffff;
-            padding: 6px 15px;
+        .btn-header {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid white;
+            color: white;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 12px;
-            transition: 0.3s;
+            text-decoration: none;
+            font-size: 13px;
         }
-        .btn-sair:hover { background: #fff; color: var(--primary); }
+        .btn-header:hover { background: white; color: var(--primary); }
+
+        .header-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; }
+        .user-badge { font-size: 13px; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; }
 
         .container { padding: 20px; max-width: 1200px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
         .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; align-items: flex-end; }
         .filtros label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 5px; }
-        .filtros input, .filtros select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .filtros input, .filtros select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 
         .btn { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
         .btn-search { background: var(--primary); }
-        .btn-excel { background: #1b5e20; }
+        .btn-excel { background: #1b5e20; margin-bottom: 15px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
         th { background: #f8f9fa; padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 12px; color: #444; }
         td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: top; }
         
         .status-ok { color: var(--success); font-weight: bold; }
         .status-avaria { color: var(--danger); font-weight: bold; }
         .detalhe-avaria { font-size: 11px; background: #fff5f5; border: 1px solid #ffcdd2; padding: 5px; border-radius: 4px; margin-top: 5px; color: #b71c1c; }
-        .equipe-tag { display: inline-block; background: #eceff1; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 3px; border: 1px solid #cfd8dc; }
+        .equipe-tag { display: inline-block; background: #eceff1; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 3px; border: 1px solid #cfd8dc; margin-bottom: 2px;}
     </style>
 </head>
 <body>
 
 <header>
-    <div class="user-info">Olá, <strong id="userName">...</strong></div>
-    <div class="header-title">Controle de Qualidade</div>
+    <div class="header-left">
+        <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
+        <span class="user-badge" id="userName">Carregando...</span>
+    </div>
+    <div class="header-center">
+        <h1 class="header-title">Qualidade e Carregamento</h1>
+    </div>
     <div class="header-right">
-        <button class="btn-sair" onclick="window.location.href='menu.html'">VOLTAR</button>
+        <button class="btn-header" id="btnLogout" style="border-color: #ffcdd2;">SAIR</button>
     </div>
 </header>
 
@@ -76,25 +81,25 @@
     <div class="card">
         <div class="filtros">
             <div>
-                <label>INÍCIO</label>
+                <label>DATA INICIAL</label>
                 <input type="date" id="dataInicio">
             </div>
             <div>
-                <label>FIM</label>
+                <label>DATA FINAL</label>
                 <input type="date" id="dataFim">
             </div>
             <div>
-                <label>VÍNCULO DA EQUIPE</label>
+                <label>FILTRAR VÍNCULO</label>
                 <select id="filtroVinculo">
-                    <option value="TODOS">TODOS</option>
-                    <option value="MEI">SÓ MEI</option>
-                    <option value="TERCEIRO">SÓ TERCEIRO</option>
+                    <option value="TODOS">TODOS OS VÍNCULOS</option>
+                    <option value="MEI">SOMENTE MEI</option>
+                    <option value="TERCEIRO">SOMENTE TERCEIRO</option>
                 </select>
             </div>
-            <button class="btn btn-search" id="btnFiltrar">ATUALIZAR RELATÓRIO</button>
+            <button class="btn btn-search" id="btnFiltrar">ATUALIZAR TABELA</button>
         </div>
 
-        <button class="btn btn-excel" id="btnExportExcel">📊 EXPORTAR EXCEL</button>
+        <button class="btn btn-excel" id="btnExportExcel">📊 EXPORTAR PARA EXCEL</button>
 
         <div style="overflow-x: auto;">
             <table id="tabelaQualidade">
@@ -109,7 +114,7 @@
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
-                    <tr><td colspan="6" style="text-align:center;">Selecione as datas e clique em atualizar...</td></tr>
+                    <tr><td colspan="6" style="text-align:center;">Clique em ATUALIZAR para carregar os dados.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -118,7 +123,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
@@ -126,71 +131,87 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Ajuste inicial das datas
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('dataInicio').value = hoje;
     document.getElementById('dataFim').value = hoje;
 
     onAuthStateChanged(auth, user => {
-        if(user) document.getElementById('userName').innerText = user.email.split('@')[0].toUpperCase();
+        if(user) {
+            document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase();
+        } else {
+            window.location.href = "index.html";
+        }
     });
 
+    document.getElementById('btnLogout').onclick = () => signOut(auth);
+
     async function carregarRelatorio() {
-        const dIni = document.getElementById('dataInicio').value;
+        const dIni = document.getElementById('dataInicio').value; // Formato yyyy-mm-dd
         const dFim = document.getElementById('dataFim').value;
         const vinculoFiltro = document.getElementById('filtroVinculo').value;
         const corpo = document.getElementById('corpoTabela');
         
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Processando dados...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando informações...</td></tr>';
 
         try {
-            // 1. Mapeia Vínculos dos Colaboradores
+            // 1. Mapeia Vínculos
             const equipeSnap = await getDocs(collection(db, "equipe"));
             let vinculos = {};
-            equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo);
+            equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo || "TERCEIRO");
 
             // 2. Mapeia Avarias
             const avariasSnap = await getDocs(collection(db, "avarias"));
             let mapaAvarias = {};
             avariasSnap.forEach(doc => {
                 const av = doc.data();
-                if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
-                mapaAvarias[av.expedicaoId].push(av);
+                if (av.expedicaoId) {
+                    if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
+                    mapaAvarias[av.expedicaoId].push(av);
+                }
             });
 
             // 3. Busca Expedições
             const expSnap = await getDocs(query(collection(db, "expedicoes"), orderBy("data", "desc")));
-
+            
             corpo.innerHTML = "";
-            let encontrou = false;
+            let contador = 0;
 
             expSnap.forEach(docExp => {
                 const exp = docExp.data();
-                const partes = exp.data.split('/');
-                const dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
-                
-                if (dataFormatada >= dIni && dataFormatada <= dFim) {
-                    const equipe = exp.equipe_carregamento || [];
-                    
-                    // Lógica do Filtro de Vínculo: Se algum membro da equipe bater com o filtro
-                    const equipeInfo = equipe.map(nome => {
-                        const v = vinculos[nome] || "TERCEIRO";
-                        return { nome, vinculo: v };
-                    });
+                if (!exp.data) return;
 
+                // Lógica de conversão de data string DD/MM/YYYY para YYYY-MM-DD
+                const p = exp.data.split('/');
+                const dataFormatadaDoc = `${p[2]}-${p[1]}-${p[0]}`;
+
+                // Filtro de Data
+                if (dataFormatadaDoc >= dIni && dataFormatadaDoc <= dFim) {
+                    const listaEquipe = exp.equipe_carregamento || [];
+                    
+                    // Mapeia detalhes da equipe
+                    const infoEquipe = listaEquipe.map(nome => ({
+                        nome: nome,
+                        vinculo: vinculos[nome] || "TERCEIRO"
+                    }));
+
+                    // Filtro de Vínculo
                     if (vinculoFiltro !== "TODOS") {
-                        const temNoFiltro = equipeInfo.some(e => e.vinculo === vinculoFiltro);
+                        const temNoFiltro = infoEquipe.some(e => e.vinculo === vinculoFiltro);
                         if (!temNoFiltro) return;
                     }
 
-                    encontrou = true;
-                    const temAvaria = mapaAvarias[docExp.id];
-                    const equipeHtml = equipeInfo.map(e => `<span class="equipe-tag">${e.nome} (${e.vinculo})</span>`).join('');
+                    contador++;
+                    const idExp = docExp.id;
+                    const avariasDaExp = mapaAvarias[idExp];
 
-                    let avariaHtml = '<span class="status-ok">✅ OK</span>';
-                    if (temAvaria) {
-                        avariaHtml = '<span class="status-avaria">⚠️ AVARIA</span>';
-                        temAvaria.forEach(a => {
-                            avariaHtml += `<div class="detalhe-avaria"><strong>${a.quantidade}x</strong> ${a.descricao}</div>`;
+                    const equipeHtml = infoEquipe.map(e => `<span class="equipe-tag">${e.nome} <small>(${e.vinculo})</small></span>`).join('');
+
+                    let statusHtml = '<span class="status-ok">✅ SEM AVARIAS</span>';
+                    if (avariasDaExp) {
+                        statusHtml = '<span class="status-avaria">⚠️ POSSUI AVARIA</span>';
+                        avariasDaExp.forEach(a => {
+                            statusHtml += `<div class="detalhe-avaria"><strong>${a.quantidade}x</strong> - ${a.descricao}</div>`;
                         });
                     }
 
@@ -199,24 +220,30 @@
                             <td>${exp.data}</td>
                             <td><strong>${exp.expedicao}</strong></td>
                             <td>${exp.destino}</td>
-                            <td>${exp.placa}<br><small>${exp.peso || 0}kg</small></td>
+                            <td>${exp.placa}<br><small>P: ${exp.peso || 0}kg</small></td>
                             <td>${equipeHtml}</td>
-                            <td>${avariaHtml}</td>
+                            <td>${statusHtml}</td>
                         </tr>`;
                 }
             });
 
-            if (!encontrou) corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Sem dados para este filtro.</td></tr>';
-        } catch (e) {
-            console.error(e);
-            corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Erro ao carregar.</td></tr>';
+            if (contador === 0) {
+                corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum registro encontrado para esse período/filtro.</td></tr>';
+            }
+
+        } catch (error) {
+            console.error("Erro detalhado:", error);
+            corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Erro ao carregar: ${error.message}</td></tr>`;
         }
     }
 
     document.getElementById('btnFiltrar').onclick = carregarRelatorio;
     document.getElementById('btnExportExcel').onclick = () => {
-        XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("tabelaQualidade")), "Relatorio_Qualidade.xlsx");
+        const table = document.getElementById("tabelaQualidade");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `Relatorio_Qualidade_Simonetti.xlsx`);
     };
+
 </script>
 </body>
 </html>
