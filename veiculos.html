@@ -11,6 +11,7 @@
             --white: #ffffff;
             --text: #333;
             --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --success: #2e7d32;
         }
 
         body {
@@ -20,7 +21,6 @@
             padding: 0;
         }
 
-        /* Header com botão voltar e sair conforme solicitado */
         header {
             background-color: var(--primary);
             color: var(--white);
@@ -31,10 +31,11 @@
             position: sticky;
             top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .header-left { display: flex; align-items: center; gap: 15px; }
-        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; }
         
         .btn-sair {
             background: rgba(255, 255, 255, 0.2);
@@ -72,6 +73,7 @@
             border-radius: 4px;
             box-sizing: border-box;
             text-transform: uppercase;
+            font-size: 16px; /* Evita zoom no iPhone */
         }
 
         .btn-salvar {
@@ -86,26 +88,35 @@
             cursor: pointer;
         }
 
-        /* Tabela Responsiva */
+        .btn-cancelar {
+            width: 100%;
+            background: #757575;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Escondido por padrão */
+        }
+
         .table-container {
             overflow-x: auto;
             background: white;
             border-radius: 8px;
         }
 
-        table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        table { width: 100%; border-collapse: collapse; }
         th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 13px; color: #666; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
 
-        .btn-delete {
-            background: #ffcdd2;
-            color: #c62828;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
+        .btn-edit { color: #1976d2; cursor: pointer; font-weight: bold; margin-right: 15px; border: none; background: none; }
+        .btn-delete { color: #c62828; cursor: pointer; font-weight: bold; border: none; background: none; }
+
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            td, th { padding: 8px; font-size: 12px; }
         }
     </style>
 </head>
@@ -114,15 +125,17 @@
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-back">⬅️</a>
-        <span>Bem-vindo, <strong id="userName">...</strong></span>
+        <span>Olá, <strong id="userName">...</strong></span>
     </div>
     <button class="btn-sair" id="btnSair">SAIR</button>
 </header>
 
 <div class="container">
     <div class="card">
-        <h2>CADASTRAR VEÍCULO (PLACA)</h2>
+        <h2 id="tituloForm">CADASTRAR VEÍCULO</h2>
         <form id="formVeiculo">
+            <input type="hidden" id="editId">
+            
             <label>PLACA DO VEÍCULO</label>
             <input type="text" id="placa" placeholder="ABC-1234" maxlength="8" required>
 
@@ -137,6 +150,7 @@
             </select>
 
             <button type="submit" class="btn-salvar" id="btnSalvar">CADASTRAR VEÍCULO</button>
+            <button type="button" class="btn-cancelar" id="btnCancelar" onclick="cancelarEdicao()">CANCELAR EDIÇÃO</button>
         </form>
     </div>
 
@@ -147,11 +161,12 @@
                 <tr>
                     <th>PLACA</th>
                     <th>TIPO</th>
-                    <th style="text-align: right;">AÇÃO</th>
+                    <th style="text-align: right;">AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="corpoTabela">
-                </tbody>
+                <tr><td colspan="3" style="text-align:center;">Carregando frota...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
@@ -159,19 +174,29 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg",
-        authDomain: "logistica-exp.firebaseapp.com",
-        projectId: "logistica-exp"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Função para registrar log no Histórico
+    let editandoId = null;
+
+    // --- MÁSCARA DA PLACA ---
+    const inputPlaca = document.getElementById('placa');
+    inputPlaca.addEventListener('input', (e) => {
+        let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (v.length > 3) {
+            // Se for modelo antigo (termina com número na 5ª posição), coloca hífen
+            // Se for mercosul (letra na 5ª posição), pode manter ou apenas formatar
+            // Aqui vamos forçar o hífen no formato padrão ABC-1234 para manter organização
+            v = v.substring(0, 3) + "-" + v.substring(3);
+        }
+        e.target.value = v.substring(0, 8);
+    });
+
+    // Registrar log
     async function registrarLog(acao, detalhe) {
         try {
             await addDoc(collection(db, "historico"), {
@@ -180,56 +205,59 @@
                 detalhe: detalhe,
                 data: serverTimestamp()
             });
-        } catch (e) { console.error("Erro log:", e); }
+        } catch (e) { console.error(e); }
     }
 
-    // Controle de Acesso e Header
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) {
-                const userData = userDoc.data();
-                document.getElementById('userName').innerText = userData.nome;
-                
-                // Só Admin entra aqui
-                if (userData.nivel !== 'admin') {
-                    alert("Acesso restrito ao Administrador.");
+                document.getElementById('userName').innerText = userDoc.data().nome.split(' ')[0].toUpperCase();
+                if (userDoc.data().nivel !== 'admin') {
                     window.location.href = "menu.html";
                 }
             }
         } else { window.location.href = "index.html"; }
     });
 
-    // Salvar Veículo
+    // Salvar ou Atualizar
     document.getElementById('formVeiculo').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const placa = document.getElementById('placa').value.toUpperCase().replace("-", "");
+        const placa = document.getElementById('placa').value.toUpperCase();
         const tipo = document.getElementById('tipoVeiculo').value;
         const btn = document.getElementById('btnSalvar');
 
         btn.disabled = true;
-        btn.innerText = "SALVANDO...";
+        btn.innerText = "PROCESSANDO...";
 
         try {
-            await addDoc(collection(db, "cad_veiculos"), {
-                placa: placa,
-                tipo: tipo,
-                criadoEm: serverTimestamp()
-            });
-
-            await registrarLog("CADASTRO VEÍCULO", `Cadastrou placa ${placa} do tipo ${tipo}`);
-            
-            alert("Veículo cadastrado!");
+            if (editandoId) {
+                await updateDoc(doc(db, "cad_veiculos", editandoId), {
+                    placa: placa,
+                    tipo: tipo
+                });
+                await registrarLog("EDIÇÃO VEÍCULO", `Editou placa para ${placa}`);
+                alert("Veículo atualizado!");
+                cancelarEdicao();
+            } else {
+                await addDoc(collection(db, "cad_veiculos"), {
+                    placa: placa,
+                    tipo: tipo,
+                    criadoEm: serverTimestamp()
+                });
+                await registrarLog("CADASTRO VEÍCULO", `Cadastrou placa ${placa}`);
+                alert("Veículo cadastrado!");
+            }
             e.target.reset();
         } catch (error) {
-            alert("Erro ao cadastrar.");
+            alert("Erro ao salvar.");
         } finally {
             btn.disabled = false;
-            btn.innerText = "CADASTRAR VEÍCULO";
+            btn.innerText = editandoId ? "ATUALIZAR VEÍCULO" : "CADASTRAR VEÍCULO";
         }
     });
 
-    // Listar Frota em Tempo Real
+    // Listar
     onSnapshot(query(collection(db, "cad_veiculos"), orderBy("criadoEm", "desc")), (snapshot) => {
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
@@ -240,6 +268,7 @@
                     <td><strong>${v.placa}</strong></td>
                     <td>${v.tipo}</td>
                     <td style="text-align: right;">
+                        <button class="btn-edit" onclick="prepararEdicao('${docSnap.id}', '${v.placa}', '${v.tipo}')">EDITAR</button>
                         <button class="btn-delete" onclick="excluirVeiculo('${docSnap.id}', '${v.placa}')">EXCLUIR</button>
                     </td>
                 </tr>
@@ -247,18 +276,35 @@
         });
     });
 
-    // Função Excluir (Global para o onclick)
+    // Funções de Edição
+    window.prepararEdicao = (id, placa, tipo) => {
+        editandoId = id;
+        document.getElementById('placa').value = placa;
+        document.getElementById('tipoVeiculo').value = tipo;
+        document.getElementById('btnSalvar').innerText = "ATUALIZAR VEÍCULO";
+        document.getElementById('btnSalvar').style.background = "var(--success)";
+        document.getElementById('btnCancelar').style.display = "block";
+        document.getElementById('tituloForm').innerText = "EDITANDO VEÍCULO";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelarEdicao = () => {
+        editandoId = null;
+        document.getElementById('formVeiculo').reset();
+        document.getElementById('btnSalvar').innerText = "CADASTRAR VEÍCULO";
+        document.getElementById('btnSalvar').style.background = "var(--primary)";
+        document.getElementById('btnCancelar').style.display = "none";
+        document.getElementById('tituloForm').innerText = "CADASTRAR VEÍCULO";
+    };
+
     window.excluirVeiculo = async (id, placa) => {
-        if (confirm(`Deseja excluir o veículo ${placa}?`)) {
+        if (confirm(`Excluir o veículo ${placa}?`)) {
             await deleteDoc(doc(db, "cad_veiculos", id));
             await registrarLog("EXCLUSÃO VEÍCULO", `Removeu a placa ${placa}`);
         }
     };
 
-    // Logout
     document.getElementById('btnSair').onclick = () => signOut(auth);
-
 </script>
-
 </body>
 </html>
