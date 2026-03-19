@@ -13,18 +13,26 @@
         .btn-back { color: white; text-decoration: none; font-size: 20px; }
         .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .container { padding: 20px; max-width: 1100px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
 
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 12px; }
         input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
         .btn-salvar { width: 100%; background: #2e7d32; color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
+        /* Filtros e Resumo */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .resumo-box { display: flex; gap: 15px; }
+        .resumo-item { background: #fff; padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .resumo-item span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
+        .resumo-item strong { font-size: 18px; color: var(--primary); }
+
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; color: #666; border-bottom: 2px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
@@ -66,10 +74,18 @@
                 </div>
                 <div>
                     <label>TIPO VEÍCULO</label>
-                    <input type="text" id="tipoVeic" placeholder="Busca automática..." readonly style="background: #f9f9f9;">
+                    <input type="text" id="tipoVeic" readonly style="background: #f9f9f9;">
                 </div>
                 <div>
-                    <label>DESTINO (CENTRAL)</label>
+                    <label>BOX (Doca)</label>
+                    <input type="text" id="boxExp" placeholder="Ex: 7D" style="text-transform: uppercase;" required>
+                </div>
+                <div>
+                    <label>PESO (KG)</label>
+                    <input type="text" id="pesoExp" placeholder="0,00" required>
+                </div>
+                <div>
+                    <label>DESTINO</label>
                     <select id="destinoExp" required>
                         <option value="">Selecione...</option>
                     </select>
@@ -85,20 +101,47 @@
                     <input type="date" id="dataExp" required>
                 </div>
             </div>
-            <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR NO SISTEMA</button>
+            <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR EXPEDIÇÃO</button>
         </form>
     </div>
 
+    <div class="toolbar">
+        <div class="resumo-box">
+            <div class="resumo-item">
+                <span>Total Expedições</span>
+                <strong id="totalExp">0</strong>
+            </div>
+            <div class="resumo-item">
+                <span>Total Carros (Placas Únicas)</span>
+                <strong id="totalCarros">0</strong>
+            </div>
+        </div>
+        <div style="display: flex; gap: 5px; align-items: flex-end;">
+            <div>
+                <label style="margin:0; font-size: 10px;">DE:</label>
+                <input type="date" id="filtroInicio" style="padding: 5px; width: 130px;">
+            </div>
+            <div>
+                <label style="margin:0; font-size: 10px;">ATÉ:</label>
+                <input type="date" id="filtroFim" style="padding: 5px; width: 130px;">
+            </div>
+            <button id="btnFiltrar" style="padding: 7px 15px; cursor:pointer; background: var(--primary); color:white; border:none; border-radius:4px;">BUSCAR</button>
+        </div>
+    </div>
+
     <div class="card">
-        <h2>EXPEDIÇÕES DO DIA</h2>
+        <h2>HISTÓRICO DE EXPEDIÇÕES</h2>
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
+                        <th>DATA</th>
                         <th>EXPEDIÇÃO</th>
                         <th>PLACA</th>
                         <th>TIPO</th>
                         <th>DESTINO</th>
+                        <th>BOX</th>
+                        <th>PESO (KG)</th>
                         <th>CONFERENTE</th>
                         <th>STATUS</th>
                         <th>AÇÕES</th>
@@ -113,7 +156,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
@@ -122,24 +165,33 @@
 
     let veiculosCache = {};
 
-    // 1. Controle de Sessão e Inicialização
+    // MÁSCARA DE PESO (Dinâmica)
+    document.getElementById('pesoExp').addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, "");
+        v = (v / 100).toFixed(2) + "";
+        v = v.replace(".", ",");
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        e.target.value = v;
+    });
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
             
+            // Setar data de hoje no formulário por padrão
+            document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
+            
             carregarPlacas();
             carregarDestinos();
             carregarConferentes();
-            listarExpedicoes();
+            listarExpedicoes(); // Carrega inicial (hoje)
         } else { window.location.href = "index.html"; }
     });
 
-    // 2. Carregar Placas e Gerenciar Tipo de Veículo
     async function carregarPlacas() {
         const snap = await getDocs(collection(db, "cad_veiculos"));
         const selectPlaca = document.getElementById('placa');
-        
         snap.forEach(doc => {
             const v = doc.data();
             veiculosCache[v.placa] = v.tipo;
@@ -148,34 +200,24 @@
             opt.textContent = v.placa;
             selectPlaca.appendChild(opt);
         });
-
         selectPlaca.addEventListener('change', (e) => {
-            const placa = e.target.value;
-            document.getElementById('tipoVeic').value = veiculosCache[placa] || "";
+            document.getElementById('tipoVeic').value = veiculosCache[e.target.value] || "";
         });
     }
 
-    // 3. Carregar Destinos Dinâmicos
     async function carregarDestinos() {
         const snap = await getDocs(collection(db, "destinos"));
         const select = document.getElementById('destinoExp');
-        select.innerHTML = '<option value="">Selecione...</option>';
-        snap.forEach(doc => {
-            select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`;
-        });
+        snap.forEach(doc => { select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`; });
     }
 
-    // 4. Carregar Conferentes Reais (apenas da coleção 'conferentes')
     async function carregarConferentes() {
         const snap = await getDocs(collection(db, "conferentes"));
         const select = document.getElementById('conferenteExp');
-        select.innerHTML = '<option value="">Selecione...</option>';
-        snap.forEach(doc => {
-            select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`;
-        });
+        snap.forEach(doc => { select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`; });
     }
 
-    // 5. Salvar / Editar Expedição
+    // SALVAR
     document.getElementById('formExpedicao').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('editId').value;
@@ -183,6 +225,8 @@
             codigo: document.getElementById('codExp').value,
             placa: document.getElementById('placa').value,
             tipo: document.getElementById('tipoVeic').value,
+            box: document.getElementById('boxExp').value.toUpperCase(),
+            peso: document.getElementById('pesoExp').value,
             destino: document.getElementById('destinoExp').value,
             conferente: document.getElementById('conferenteExp').value,
             data: document.getElementById('dataExp').value,
@@ -197,41 +241,66 @@
                 dados.status = "CRIADO";
                 dados.criadoEm = serverTimestamp();
                 await addDoc(collection(db, "expedicoes"), dados);
-                alert("Criado!");
+                alert("Salvo com sucesso!");
             }
             e.target.reset();
             document.getElementById('editId').value = "";
-            document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
+            document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
         } catch (err) { alert("Erro ao salvar."); }
     });
 
-    // 6. Listar Expedições
-    function listarExpedicoes() {
-        const q = query(collection(db, "expedicoes"), orderBy("criadoEm", "desc"));
+    // LISTAGEM E LÓGICA DE CARROS ÚNICOS
+    function listarExpedicoes(dataInicio = null, dataFim = null) {
+        let q = query(collection(db, "expedicoes"), orderBy("data", "desc"));
+        
+        if (dataInicio && dataFim) {
+            q = query(collection(db, "expedicoes"), where("data", ">=", dataInicio), where("data", "<=", dataFim));
+        }
+
         onSnapshot(q, (snap) => {
             const corpo = document.getElementById('corpoTabela');
             corpo.innerHTML = "";
+            let countExp = 0;
+            let placasUnicas = new Set();
+
             snap.forEach(d => {
                 const item = d.data();
+                countExp++;
+                placasUnicas.add(item.placa + item.data); // Chave única: Placa + Dia
+
+                const dataFormatada = item.data.split('-').reverse().join('/');
+                
                 corpo.innerHTML += `
                     <tr>
-                        <td>${item.codigo}</td>
+                        <td>${dataFormatada}</td>
+                        <td><strong>${item.codigo}</strong></td>
                         <td>${item.placa}</td>
                         <td>${item.tipo}</td>
                         <td>${item.destino}</td>
+                        <td>${item.box || '-'}</td>
+                        <td>${item.peso || '0,00'}</td>
                         <td>${item.conferente}</td>
                         <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
                         <td>
-                            <button class="btn-acao btn-status" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP.</button>
-                            <button class="btn-acao btn-status" onclick="mudarStatus('${d.id}', 'CONFERÊNCIA FINALIZADA')" style="background:#2e7d32">OK</button>
+                            <button class="btn-acao btn-status" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
                             <button class="btn-acao btn-edit" onclick="editar('${d.id}')">✏️</button>
                             <button class="btn-acao btn-del" onclick="excluir('${d.id}')">🗑️</button>
                         </td>
                     </tr>
                 `;
             });
+            document.getElementById('totalExp').innerText = countExp;
+            document.getElementById('totalCarros').innerText = placasUnicas.size;
         });
     }
+
+    // Filtro Manual
+    document.getElementById('btnFiltrar').onclick = () => {
+        const inicio = document.getElementById('filtroInicio').value;
+        const fim = document.getElementById('filtroFim').value;
+        if(inicio && fim) listarExpedicoes(inicio, fim);
+        else alert("Selecione as duas datas.");
+    };
 
     function getStatusClass(s) {
         if (s === 'CRIADO') return 'status-criado';
@@ -239,7 +308,6 @@
         return 'status-concluido';
     }
 
-    // Funções Globais
     window.mudarStatus = async (id, novoStatus) => {
         await updateDoc(doc(db, "expedicoes", id), { status: novoStatus });
     };
@@ -251,6 +319,8 @@
         document.getElementById('codExp').value = data.codigo;
         document.getElementById('placa').value = data.placa;
         document.getElementById('tipoVeic').value = data.tipo;
+        document.getElementById('boxExp').value = data.box || "";
+        document.getElementById('pesoExp').value = data.peso || "";
         document.getElementById('destinoExp').value = data.destino;
         document.getElementById('conferenteExp').value = data.conferente;
         document.getElementById('dataExp').value = data.data;
@@ -259,7 +329,7 @@
     };
 
     window.excluir = async (id) => {
-        if(confirm("Excluir esta expedição?")) await deleteDoc(doc(db, "expedicoes", id));
+        if(confirm("Deseja excluir?")) await deleteDoc(doc(db, "expedicoes", id));
     };
 
     document.getElementById('btnSair').onclick = () => signOut(auth);
