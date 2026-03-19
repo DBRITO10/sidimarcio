@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Produtos - Simonetti</title>
+    <style>
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 20px; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .busca { margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .btn-edit { color: blue; cursor: pointer; margin-right: 10px; }
+        .btn-del { color: red; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="menu.html" style="text-decoration: none;">⬅ VOLTAR</a>
+    <h2 style="color: var(--primary); margin:0;">Produtos</h2>
+    <div></div>
+</header>
+
+<div class="card">
+    <h3>Novo Produto</h3>
+    <input type="text" id="prodCodigo" placeholder="Código do Produto">
+    <input type="text" id="prodNome" placeholder="Descrição/Nome">
+    <button class="btn-add" id="btnSalvar">SALVAR PRODUTO</button>
+</div>
+
+<div class="card" style="margin-top: 20px; max-width: 800px;">
+    <input type="text" id="inputBusca" placeholder="🔍 Buscar por código ou nome..." onkeyup="filtrar()">
+    <table id="tabelaProdutos">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="listaProdutos"></tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let produtos = [];
+    let editandoId = null;
+
+    async function carregarProdutos() {
+        const snap = await getDocs(collection(db, "produtos_lista"));
+        produtos = [];
+        const tbody = document.getElementById('listaProdutos');
+        tbody.innerHTML = "";
+        snap.forEach(d => {
+            const p = { id: d.id, ...d.data() };
+            produtos.push(p);
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.codigo}</td>
+                    <td>${p.nome}</td>
+                    <td>
+                        <span class="btn-edit" onclick="editarProduto('${p.id}', '${p.codigo}', '${p.nome}')">✏️</span>
+                        <span class="btn-del" onclick="excluirProduto('${p.id}', '${p.codigo}')">🗑️</span>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    document.getElementById('btnSalvar').onclick = async () => {
+        const cod = document.getElementById('prodCodigo').value;
+        const nome = document.getElementById('prodNome').value;
+        if(!cod || !nome) return alert("Preencha tudo");
+
+        if(editandoId) {
+            await updateDoc(doc(db, "produtos_lista", editandoId), { codigo: cod, nome: nome.toUpperCase() });
+            await registrarHistorico(`EDITOU PRODUTO: ${cod}`);
+            editandoId = null;
+        } else {
+            await addDoc(collection(db, "produtos_lista"), { codigo: cod, nome: nome.toUpperCase() });
+            await registrarHistorico(`CADASTROU PRODUTO: ${cod}`);
+        }
+        
+        document.getElementById('prodCodigo').value = "";
+        document.getElementById('prodNome').value = "";
+        carregarProdutos();
+    };
+
+    window.excluirProduto = async (id, cod) => {
+        if(confirm("Excluir produto?")) {
+            await deleteDoc(doc(db, "produtos_lista", id));
+            await registrarHistorico(`EXCLUIU PRODUTO: ${cod}`);
+            carregarProdutos();
+        }
+    };
+
+    window.editarProduto = (id, cod, nome) => {
+        document.getElementById('prodCodigo').value = cod;
+        document.getElementById('prodNome').value = nome;
+        editandoId = id;
+        window.scrollTo(0,0);
+    };
+
+    async function registrarHistorico(acao) {
+        await addDoc(collection(db, "historico"), {
+            acao: "PRODUTOS",
+            detalhe: acao,
+            usuario: auth.currentUser.email,
+            data: serverTimestamp()
+        });
+    }
+
+    window.filtrar = () => {
+        const termo = document.getElementById('inputBusca').value.toLowerCase();
+        const linhas = document.querySelectorAll('#listaProdutos tr');
+        linhas.forEach(l => {
+            l.style.display = l.innerText.toLowerCase().includes(termo) ? "" : "none";
+        });
+    };
+
+    carregarProdutos();
+</script>
+</body>
+</html>
