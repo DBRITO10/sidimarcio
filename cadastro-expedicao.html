@@ -179,6 +179,13 @@
 
     let veiculosCache = {};
 
+    // Função auxiliar para obter a data local no formato YYYY-MM-DD
+    const obterDataLocal = () => {
+        const agora = new Date();
+        const offset = agora.getTimezoneOffset() * 60000;
+        return new Date(agora - offset).toISOString().split('T')[0];
+    };
+
     // MÁSCARA DE PESO
     document.getElementById('pesoExp').addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, "");
@@ -193,7 +200,7 @@
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
             
-            const hoje = new Date().toISOString().split('T')[0];
+            const hoje = obterDataLocal();
             document.getElementById('dataExp').value = hoje;
             document.getElementById('filtroInicio').value = hoje;
             document.getElementById('filtroFim').value = hoje;
@@ -256,7 +263,8 @@
         }
         e.target.reset();
         document.getElementById('editId').value = "";
-        document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
+        document.getElementById('dataExp').value = obterDataLocal();
+        document.getElementById('tituloForm').innerText = "NOVA EXPEDIÇÃO";
     };
 
     function listarExpedicoes(inicio, fim) {
