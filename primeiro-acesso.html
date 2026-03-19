@@ -35,7 +35,6 @@
         <label>Tipo de Função (Nível de Acesso)</label>
         <select id="funcaoUser" required>
             <option value="" disabled selected>Selecione seu perfil...</option>
-            <option value="colaborador">Colaborador (Expedição / Cadastro)</option>
             <option value="usuario">Usuário Central (Conferência / Destino)</option>
             <option value="leitor">Leitor (Apenas Relatórios)</option>
         </select>
@@ -118,9 +117,9 @@
             
             // Redirecionamento inteligente baseado no que você definiu:
             if (funcaoSelecionada === "usuario") {
-                window.location.href = "conferencia.html";
+                window.location.href = "menu.html";
             } else if (funcaoSelecionada === "leitor") {
-                window.location.href = "relatorio.html";
+                window.location.href = "menu.html";
             } else {
                 window.location.href = "menu.html";
             }
