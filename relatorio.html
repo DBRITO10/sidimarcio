@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expedição Móveis Simonetti</title>
+    <title>Expedição Simonetti - Douglas Brito</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,109 +13,115 @@
     <style>
         :root { 
             --primary: #b71c1c; --secondary: #d32f2f; --bg: #f4f7f6;
-            --carreta: #1b5e20; --truck: #03a9f4; --34: #7b1fa2; --toco: #ffeb3b;
+            --carreta: #1b5e20; --truck: #4682B4; --v34: #7b1fa2; --toco: #ffeb3b;
+            --separacao: #ef6c00; --finalizado: #1b5e20;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 0; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
         
-        /* Header */
-        header { background: var(--secondary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .btn-header { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 15px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 13px; font-weight: bold; }
-        .btn-sair { background: white; color: var(--secondary); border: none; padding: 6px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        header { background: var(--secondary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .btn-header { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 15px; border-radius: 4px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 13px; }
 
-        .container { max-width: 100%; padding: 15px; box-sizing: border-box; }
-        .banner-title { background: var(--primary); color: white; text-align: center; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .container { padding: 15px; max-width: 100%; box-sizing: border-box; }
+        .banner-title { background: var(--primary); color: white; text-align: center; padding: 12px; border-radius: 4px; font-weight: bold; margin-bottom: 20px; }
 
-        /* Gráficos */
+        /* Dashboard */
         .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
-        .chart-card h3 { font-size: 14px; color: #555; margin-bottom: 15px; text-transform: uppercase; }
-        canvas { max-height: 280px !important; width: 100% !important; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
 
         /* KPI */
         .kpi-container { text-align: center; margin-bottom: 20px; }
-        .kpi-badge { border: 2px solid var(--secondary); color: var(--secondary); padding: 8px 25px; border-radius: 25px; font-size: 18px; font-weight: bold; background: white; display: inline-block; }
+        .kpi-badge { border: 2px solid var(--secondary); color: var(--secondary); padding: 8px 30px; border-radius: 30px; font-size: 18px; font-weight: bold; background: white; display: inline-block; }
 
-        /* Tabela Responsiva com Rolagem Lateral */
-        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); -webkit-overflow-scrolling: touch; }
+        /* Toolbar */
+        .toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .search-box { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; width: 250px; }
+        .btn-share { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+
+        /* Tabela */
+        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
-        th { background: var(--primary); color: white; padding: 12px 8px; text-align: center; font-size: 12px; text-transform: uppercase; white-space: nowrap; }
-        td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #333; font-weight: 500; }
+        th { background: var(--primary); color: white; padding: 12px 5px; font-size: 11px; text-transform: uppercase; cursor: pointer; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        th:hover { background: #8e1616; }
+        .sort-icon { font-size: 10px; margin-left: 5px; opacity: 0.7; }
+        
+        /* Zebrado e Cores */
+        tbody tr:nth-child(even) { background-color: #f2f2f2; }
+        tbody tr:nth-child(odd) { background-color: #ffffff; }
+        td { padding: 10px 5px; border: 1px solid #ddd; text-align: center; font-size: 13px; font-weight: 500; }
 
-        .btn-filter-col { display: block; margin: 5px auto 0; background: rgba(255,255,255,0.9); color: var(--primary); border: none; padding: 3px 10px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold; }
-        .btn-filter-col.active { background: #ffeb3b; color: #000; }
-
-        /* Badges de Veículo e Status */
-        .badge { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase; }
-        .st-finalizado { background: #1b5e20; }
+        /* Badges combinando com o gráfico */
+        .badge { padding: 4px 10px; border-radius: 15px; color: white; font-weight: bold; font-size: 10px; display: inline-block; min-width: 80px; }
+        .st-finalizado { background: var(--finalizado); }
+        .st-separacao { background: var(--separacao); }
         .v-carreta { background: var(--carreta); }
         .v-truck { background: var(--truck); }
-        .v-34 { background: var(--34); }
+        .v-34 { background: var(--v34); }
         .v-toco { background: var(--toco); color: #000; }
 
-        /* Modal Estilo Print */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; width: 90%; max-width: 350px; margin: 50px auto; border-radius: 8px; display: flex; flex-direction: column; max-height: 80vh; }
-        .modal-header { padding: 15px; border-bottom: 1px solid #eee; color: var(--primary); font-weight: bold; font-size: 18px; }
-        .modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
-        .filter-option { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f9f9f9; font-size: 14px; cursor: pointer; }
-        .filter-option input { width: 18px; height: 18px; cursor: pointer; }
-        .modal-footer { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f5f5f5; }
-        .btn-modal { padding: 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-apply { background: var(--primary); color: white; }
-        .btn-cancel { background: #607d8b; color: white; }
-        .btn-all { background: #eee; color: #333; grid-column: span 2; }
+        /* Botão Filtrar dentro da TH */
+        .btn-th-filter { background: #fff; color: #b71c1c; border: none; padding: 2px 6px; border-radius: 3px; font-size: 9px; cursor: pointer; margin-top: 5px; display: block; width: 90%; margin-left: auto; margin-right: auto; font-weight: bold; }
+        .btn-th-filter.active { background: #ffeb3b; }
 
-        @media (max-width: 600px) {
-            .charts-row { grid-template-columns: 1fr; }
-            header { padding: 10px; }
-        }
+        /* Modal Organizado */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; width: 90%; max-width: 380px; margin: 40px auto; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 15px; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: bold; font-size: 18px; text-align: center; }
+        .modal-body { padding: 15px; overflow-y: auto; max-height: 400px; }
+        .filter-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .filter-item input { width: 18px; height: 18px; }
+        .modal-footer { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f9f9f9; }
+        .btn-m { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-m-red { background: var(--primary); color: white; }
+        .btn-m-gray { background: #6c757d; color: white; }
+        .btn-m-outline { background: white; border: 1px solid #ccc; grid-column: span 1; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="header-left">
-        <a href="menu.html" class="btn-header">⬅</a>
-        <span id="userDisplayName" style="font-size: 12px; font-weight: bold;">Bem-vindo</span>
+        <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
+        <span id="userNameDisplay">Bem-vindo, DOUGLAS BRITO</span>
     </div>
-    <div style="display: flex; gap: 8px;">
-        <button onclick="exportarPDF()" class="btn-header" style="background:#0288d1">PDF</button>
-        <button id="btnSair" class="btn-sair">SAIR</button>
-    </div>
+    <button id="btnSair" class="btn-header" style="background:white; color:var(--primary); border:none;">SAIR</button>
 </header>
 
 <div class="container">
     <div class="banner-title">EXPEDIÇÃO_MÓVEIS SIMONETTI</div>
 
     <div class="charts-row">
-        <div class="chart-card">
-            <h3>STATUS DAS EXPEDIÇÕES</h3>
-            <canvas id="chartStatus"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>VEÍCULOS (CARGAS)</h3>
-            <canvas id="chartVeiculos"></canvas>
-        </div>
+        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES</h3><canvas id="chartStatus"></canvas></div>
+        <div class="chart-card"><h3>VEÍCULOS (CARGAS)</h3><canvas id="chartVeiculos"></canvas></div>
     </div>
 
     <div class="kpi-container">
-        <div class="kpi-badge" id="resumoKpi">CARGAS: 0 | EXPEDIÇÕES: 0</div>
+        <div class="kpi-badge" id="txtKpi">CARGAS: 0 | EXPEDIÇÕES: 0</div>
+    </div>
+
+    <div class="toolbar">
+        <input type="text" id="inputBusca" class="search-box" placeholder="Buscar na tabela (Placa, Destino...)" onkeyup="buscaGlobal()">
+        <button class="btn-share" onclick="toggleShare()">COMPARTILHAR ▼</button>
+        <div id="shareMenu" style="display:none; position:absolute; background:white; border:1px solid #ccc; margin-top:85px; z-index:100;">
+            <button onclick="exportarExcel()" style="display:block; padding:10px; width:120px; border:none; background:none; cursor:pointer;">Excel</button>
+            <hr style="margin:0">
+            <button onclick="exportarPDF()" style="display:block; padding:10px; width:120px; border:none; background:none; cursor:pointer;">PDF</button>
+        </div>
     </div>
 
     <div class="table-container">
-        <table id="tabelaDados">
+        <table id="tabelaMaster">
             <thead>
-                <tr>
-                    <th>DATA <button class="btn-filter-col" id="btn-data" onclick="abrirFiltro('data')">FILTRAR</button></th>
-                    <th>EXPEDIÇÃO <button class="btn-filter-col" id="btn-codigo" onclick="abrirFiltro('codigo')">FILTRAR</button></th>
-                    <th>PLACAS <button class="btn-filter-col" id="btn-placa" onclick="abrirFiltro('placa')">FILTRAR</button></th>
-                    <th>DESTINO <button class="btn-filter-col" id="btn-destino" onclick="abrirFiltro('destino')">FILTRAR</button></th>
-                    <th>BOX <button class="btn-filter-col" id="btn-box" onclick="abrirFiltro('box')">FILTRAR</button></th>
-                    <th>STATUS <button class="btn-filter-col" id="btn-status" onclick="abrirFiltro('status')">FILTRAR</button></th>
-                    <th>CONFERENTE <button class="btn-filter-col" id="btn-conferente" onclick="abrirFiltro('conferente')">FILTRAR</button></th>
-                    <th>VEÍCULO <button class="btn-filter-col" id="btn-tipo" onclick="abrirFiltro('tipo')">FILTRAR</button></th>
-                    <th>PESO</th>
+                <tr id="headerRow">
+                    <th onclick="ordenar(0)">DATA <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-data" onclick="event.stopPropagation(); abrirFiltro('data')">FILTRAR</button></th>
+                    <th onclick="ordenar(1)">EXPEDIÇÃO <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-codigo" onclick="event.stopPropagation(); abrirFiltro('codigo')">FILTRAR</button></th>
+                    <th onclick="ordenar(2)">PLACAS <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-placa" onclick="event.stopPropagation(); abrirFiltro('placa')">FILTRAR</button></th>
+                    <th onclick="ordenar(3)">DESTINO <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-destino" onclick="event.stopPropagation(); abrirFiltro('destino')">FILTRAR</button></th>
+                    <th onclick="ordenar(4)">BOX <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-box" onclick="event.stopPropagation(); abrirFiltro('box')">FILTRAR</button></th>
+                    <th onclick="ordenar(5)">STATUS <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-status" onclick="event.stopPropagation(); abrirFiltro('status')">FILTRAR</button></th>
+                    <th onclick="ordenar(6)">CONFERENTE <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-conferente" onclick="event.stopPropagation(); abrirFiltro('conferente')">FILTRAR</button></th>
+                    <th onclick="ordenar(7)">VEÍCULO <span class="sort-icon">⇅</span> <button class="btn-th-filter" id="f-tipo" onclick="event.stopPropagation(); abrirFiltro('tipo')">FILTRAR</button></th>
+                    <th onclick="ordenar(8)">PESO <span class="sort-icon">⇅</span></th>
                 </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
@@ -123,15 +129,15 @@
     </div>
 </div>
 
-<div id="modalFiltro" class="modal">
+<div id="modalF" class="modal">
     <div class="modal-content">
-        <div class="modal-header" id="modalTitulo">FILTRAR</div>
-        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-header" id="mTit">FILTRAR</div>
+        <div class="modal-body" id="mBody"></div>
         <div class="modal-footer">
-            <button class="btn-modal btn-all" onclick="toggleTodos(true)">Todos</button>
-            <button class="btn-modal btn-all" onclick="toggleTodos(false)">Nenhum</button>
-            <button class="btn-modal btn-cancel" onclick="fecharFiltro()">Cancelar</button>
-            <button class="btn-modal btn-apply" onclick="aplicarFiltro()">Aplicar</button>
+            <button class="btn-m btn-m-outline" onclick="checkTodos(true)">Todos</button>
+            <button class="btn-m btn-m-outline" onclick="checkTodos(false)">Nenhum</button>
+            <button class="btn-m btn-m-gray" onclick="fecharF()">Cancelar</button>
+            <button class="btn-m btn-m-red" onclick="aplicarF()">Aplicar</button>
         </div>
     </div>
 </div>
@@ -139,161 +145,173 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let dadosOriginais = [];
-    let filtrosAtivos = {}; 
-    let colunaAberta = '';
-    let chartS, chartV;
+    let dadosFull = [], filtrosAtivos = {}, colAtual = '';
+    let cS, cV;
 
-    const COR_VEICULOS = { 'CARRETA': '#1b5e20', 'TRUCK': '#03a9f4', 'CARRO 3/4': '#7b1fa2', 'TOCO': '#ffeb3b' };
-
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
         if(user) {
-            document.getElementById('userDisplayName').innerText = "Bem-vindo, " + user.email.split('@')[0].toUpperCase();
-            carregarDados();
+            // Busca o nome Douglas Brito no Firestore
+            const uSnap = await getDoc(doc(db, "usuarios", "LqfKXq6uevZMAw49sdEKpbprLa53"));
+            if(uSnap.exists()) document.getElementById('userNameDisplay').innerText = "Bem-vindo, " + uSnap.data().nome.toUpperCase();
+            
+            carregar();
         } else { window.location.href="index.html"; }
     });
 
-    async function carregarDados() {
-        const snap = await getDocs(query(collection(db, "expedicoes"), orderBy("data", "desc")));
-        dadosOriginais = [];
-        snap.forEach(doc => dadosOriginais.push(doc.data()));
+    async function carregar() {
+        const snap = await getDocs(collection(db, "expedicoes"));
+        dadosFull = [];
+        snap.forEach(d => dadosFull.push(d.data()));
 
-        // Inicializa com a data de hoje (18/03/2026 conforme seu sistema)
+        // Filtro Inicial: Data de Hoje
         const hoje = new Date().toISOString().split('T')[0];
         filtrosAtivos['data'] = [hoje];
-        document.getElementById('btn-data').classList.add('active');
-
-        processarEExibir();
+        document.getElementById('f-data').classList.add('active');
+        
+        processar();
     }
 
-    function processarEExibir() {
-        let filtrados = [...dadosOriginais];
-        Object.keys(filtrosAtivos).forEach(col => {
-            if(filtrosAtivos[col].length > 0) {
-                filtrados = filtrados.filter(d => filtrosAtivos[col].includes(String(d[col])));
-            }
+    function processar() {
+        let f = [...dadosFull];
+        Object.keys(filtrosAtivos).forEach(c => {
+            if(filtrosAtivos[c].length > 0) f = f.filter(d => filtrosAtivos[c].includes(String(d[c])));
         });
-        renderizarTabela(filtrados);
-        atualizarGraficos(filtrados);
+        exibir(f);
     }
 
-    function renderizarTabela(lista) {
+    function exibir(lista) {
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
         lista.forEach(d => {
-            const vMod = d.tipo.toUpperCase();
-            const badgeClass = vMod.includes('CARRETA') ? 'v-carreta' : vMod.includes('TRUCK') ? 'v-truck' : vMod.includes('3/4') ? 'v-34' : vMod.includes('TOCO') ? 'v-toco' : '';
-            
+            const stCls = d.status === 'FINALIZADO' ? 'st-finalizado' : 'st-separacao';
+            const tp = d.tipo.toUpperCase();
+            const tpCls = tp.includes('CARRETA') ? 'v-carreta' : tp.includes('TRUCK') ? 'v-truck' : tp.includes('3/4') ? 'v-34' : 'v-toco';
+
             corpo.innerHTML += `<tr>
                 <td>${d.data.split('-').reverse().join('/')}</td>
                 <td>${d.codigo}</td>
                 <td>${d.placa}</td>
                 <td>${d.destino}</td>
                 <td>${d.box}</td>
-                <td><span class="badge st-finalizado">${d.status}</span></td>
+                <td><span class="badge ${stCls}">${d.status}</span></td>
                 <td>${d.conferente}</td>
-                <td><span class="badge ${badgeClass}">${d.tipo}</span></td>
+                <td><span class="badge ${tpCls}">${d.tipo}</span></td>
                 <td>${d.peso}</td>
             </tr>`;
         });
-        const nPlacas = new Set(lista.map(i => i.placa)).size;
-        document.getElementById('resumoKpi').innerText = `CARGAS: ${nPlacas} | EXPEDIÇÕES: ${lista.length}`;
+        const nP = new Set(lista.map(i => i.placa)).size;
+        document.getElementById('txtKpi').innerText = `CARGAS: ${nP} | EXPEDIÇÕES: ${lista.length}`;
+        graficos(lista);
     }
 
-    function atualizarGraficos(lista) {
-        const st = {}, vc = {};
+    function graficos(lista) {
+        const sMap = {}, vMap = {};
         lista.forEach(d => { 
-            st[d.status] = (st[d.status] || 0) + 1; 
-            const tipo = d.tipo.toUpperCase();
-            vc[tipo] = (vc[tipo] || 0) + 1;
+            sMap[d.status] = (sMap[d.status] || 0) + 1; 
+            vMap[d.tipo.toUpperCase()] = (vMap[d.tipo.toUpperCase()] || 0) + 1; 
         });
 
-        if(chartS) chartS.destroy();
-        if(chartV) chartV.destroy();
+        if(cS) cS.destroy(); if(cV) cV.destroy();
 
-        const commonOptions = (total) => ({
+        const opt = (total) => ({
             plugins: {
-                legend: { position: 'right', labels: { font: { size: 10 }, 
-                    generateLabels: (chart) => {
-                        const data = chart.data;
-                        return data.labels.map((label, i) => ({
-                            text: `${label}: ${data.datasets[0].data[i]} (${((data.datasets[0].data[i]/total)*100).toFixed(1)}%)`,
-                            fillStyle: data.datasets[0].backgroundColor[i],
-                            index: i
-                        }));
-                    }
-                }},
-                datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, formatter: (value) => value }
+                legend: { position: 'right', labels: { font:{size:10}, generateLabels: (c) => c.data.labels.map((l, i) => ({
+                    text: `${l}: ${c.data.datasets[0].data[i]} (${((c.data.datasets[0].data[i]/total)*100).toFixed(1)}%)`,
+                    fillStyle: c.data.datasets[0].backgroundColor[i], index: i
+                }))}},
+                datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: v => v }
             }
         });
 
-        chartS = new Chart(document.getElementById('chartStatus'), {
-            type: 'pie',
-            plugins: [ChartDataLabels],
-            data: { labels: Object.keys(st), datasets: [{ data: Object.values(st), backgroundColor: ['#1b5e20', '#ef6c00', '#1565c0'] }]},
-            options: commonOptions(lista.length)
+        cS = new Chart(document.getElementById('chartStatus'), {
+            type: 'pie', plugins: [ChartDataLabels],
+            data: { labels: Object.keys(sMap), datasets: [{ data: Object.values(sMap), backgroundColor: ['#1b5e20', '#ef6c00'] }]},
+            options: opt(lista.length)
         });
 
-        chartV = new Chart(document.getElementById('chartVeiculos'), {
-            type: 'doughnut',
-            plugins: [ChartDataLabels],
-            data: { labels: Object.keys(vc), datasets: [{ data: Object.values(vc), backgroundColor: Object.keys(vc).map(v => COR_VEICULOS[v] || '#607d8b') }]},
-            options: commonOptions(lista.length)
+        cV = new Chart(document.getElementById('chartVeiculos'), {
+            type: 'doughnut', plugins: [ChartDataLabels],
+            data: { labels: Object.keys(vMap), datasets: [{ data: Object.values(vMap), backgroundColor: Object.keys(vMap).map(v => v.includes('CARRETA')?'#1b5e20':v.includes('TRUCK')?'#4682B4':v.includes('3/4')?'#7b1fa2':'#ffeb3b') }]},
+            options: opt(lista.length)
         });
     }
 
-    // Modal Logic
+    // Ordenação de Colunas
+    window.ordenar = (n) => {
+        const table = document.getElementById("tabelaMaster");
+        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true; dir = "asc";
+        while (switching) {
+            switching = false; rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+                }
+            }
+            if (shouldSwitch) { rows[i].parentNode.insertBefore(rows[i + 1], rows[i]); switching = true; switchcount ++; }
+            else { if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; } }
+        }
+    };
+
+    // Filtros Modal
     window.abrirFiltro = (col) => {
-        colunaAberta = col;
-        document.getElementById('modalTitulo').innerText = col.toUpperCase();
-        const container = document.getElementById('modalBody');
-        container.innerHTML = "";
-
-        const unicos = [...new Set(dadosOriginais.map(d => String(d[col])))].sort();
-        unicos.forEach(val => {
-            const checked = filtrosAtivos[col]?.includes(val) ? 'checked' : '';
-            const label = col === 'data' ? val.split('-').reverse().join('/') : val;
-            container.innerHTML += `<label class="filter-option">
-                <input type="checkbox" value="${val}" ${checked}> ${label}
-            </label>`;
+        colAtual = col;
+        document.getElementById('mTit').innerText = col.toUpperCase();
+        const b = document.getElementById('mBody'); b.innerHTML = "";
+        const u = [...new Set(dadosFull.map(d => String(d[col])))].sort();
+        u.forEach(v => {
+            const ck = filtrosAtivos[col]?.includes(v) ? 'checked' : '';
+            b.innerHTML += `<label class="filter-item"><input type="checkbox" value="${v}" ${ck}> ${col==='data'?v.split('-').reverse().join('/'):v}</label>`;
         });
-        document.getElementById('modalFiltro').style.display = 'block';
+        document.getElementById('modalF').style.display = 'block';
     };
 
-    window.fecharFiltro = () => document.getElementById('modalFiltro').style.display = 'none';
-
-    window.toggleTodos = (status) => {
-        document.querySelectorAll('#modalBody input').forEach(i => i.checked = status);
+    window.aplicarF = () => {
+        const sel = Array.from(document.querySelectorAll('#mBody input:checked')).map(i => i.value);
+        filtrosAtivos[colAtual] = sel;
+        document.getElementById(`f-${colAtual}`).classList.toggle('active', sel.length > 0);
+        fecharF(); processar();
     };
 
-    window.aplicarFiltro = () => {
-        const selecionados = Array.from(document.querySelectorAll('#modalBody input:checked')).map(i => i.value);
-        filtrosAtivos[colunaAberta] = selecionados;
-        
-        const btn = document.getElementById(`btn-${colunaAberta}`);
-        if(selecionados.length > 0) btn.classList.add('active');
-        else btn.classList.remove('active');
+    window.fecharF = () => document.getElementById('modalF').style.display = 'none';
+    window.checkTodos = (s) => document.querySelectorAll('#mBody input').forEach(i => i.checked = s);
 
-        fecharFiltro();
-        processarEExibir();
+    // Busca Global
+    window.buscaGlobal = () => {
+        const input = document.getElementById("inputBusca").value.toUpperCase();
+        const tr = document.getElementById("corpoTabela").getElementsByTagName("tr");
+        for (let i = 0; i < tr.length; i++) {
+            tr[i].style.display = tr[i].innerText.toUpperCase().indexOf(input) > -1 ? "" : "none";
+        }
     };
+
+    window.toggleShare = () => {
+        const m = document.getElementById('shareMenu');
+        m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.exportarExcel = () => XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tabelaMaster')), "Expedicao_Simonetti.xlsx");
 
     window.exportarPDF = () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
-        doc.setFontSize(14); doc.setTextColor(183, 28, 28);
+        doc.setFontSize(16); doc.setTextColor(183,28,28);
         doc.text("MS EXPEDIÇÃO_MÓVEIS SIMONETTI", 14, 15);
-        const kpi = document.getElementById('resumoKpi').innerText;
         doc.setFontSize(10); doc.setTextColor(0,0,0);
-        doc.text(kpi, 14, 22);
-        doc.autoTable({ html: '#tabelaDados', startY: 28, headStyles: {fillColor:[183,28,28]}, styles:{fontSize:7} });
+        doc.text(document.getElementById('txtKpi').innerText, 14, 22);
+        doc.autoTable({ html: '#tabelaMaster', startY: 28, headStyles: {fillColor:[183,28,28]}, styles:{fontSize:7} });
         doc.save("Relatorio_Simonetti.pdf");
     };
 
