@@ -69,15 +69,13 @@
             text-align: center;
             text-decoration: none;
             color: var(--text);
-            display: flex;
+            display: none; /* Escondido por padrão, o JS mostrará conforme o nível */
             flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border: 1px solid #eee;
-            /* Escondido por padrão para o JS filtrar */
-            display: none; 
         }
 
         .card:hover {
@@ -123,7 +121,11 @@
     </a>
 
     <a href="conferencia.html" class="card" data-level="usuario,admin">
-        <i>✅</i><span>validar carga</span>
+        <i>✅</i><span>Validar Carga</span>
+    </a>
+
+    <a href="gerenciar-destinos.html" class="card" data-level="admin">
+        <i>📍</i><span>Gerenciar Destinos</span>
     </a>
 
     <a href="equipe.html" class="card" data-level="admin">
@@ -132,7 +134,7 @@
     
     <a href="cadastrar-conferente.html" class="card" data-level="admin">
         <i>👮‍♂️</i><span>Conferentes</span>
-    </a>    
+    </a>     
 
     <a href="veiculos.html" class="card" data-level="admin">
         <i>🚚</i><span>Cadastro Frota</span>
@@ -143,7 +145,7 @@
     </a>
 
     <a href="gestao-usuarios.html" class="card" data-level="admin">
-        <i>⚙️</i><span>Niveis de acessi</span>
+        <i>⚙️</i><span>Níveis de Acesso</span>
     </a>
 
     <a href="historico.html" class="card" data-level="admin">
@@ -183,6 +185,8 @@
                     const levelsAllowed = card.getAttribute('data-level').split(',');
                     if (levelsAllowed.includes(nivel)) {
                         card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
                     }
                 });
             } else {
