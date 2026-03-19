@@ -69,12 +69,13 @@
             <table id="tabelaQualidade">
                 <thead>
                     <tr>
-                        <th style="width: 100px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtrar..."></th>
+                        <<th style="width: 100px;">DATA <input type="text" class="filter-input" data-col="data" placeholder="Filtrar..."></th>
                         <th style="width: 100px;">EXPEDIÇÃO <input type="text" class="filter-input" data-col="codigo" placeholder="Filtrar..."></th>
                         <th>DESTINO <input type="text" class="filter-input" data-col="destino" placeholder="Filtrar..."></th>
                         <th>PLACA <input type="text" class="filter-input" data-col="placa" placeholder="Filtrar..."></th>
                         <th>EQUIPE <input type="text" class="filter-input" data-col="equipe" placeholder="Filtrar..."></th>
-                        <th style="width: 200px;">SITUAÇÃO / AVARIA <input type="text" class="filter-input" data-col="situacao" placeholder="Filtrar..."></th>
+                        <th>PRODUTOS / MOTIVOS <input type="text" class="filter-input" data-col="detalhesAvaria" placeholder="Filtrar produto/motivo..."></th>
+                        <th style="width: 120px;">SITUAÇÃO <input type="text" class="filter-input" data-col="situacaoStr" placeholder="OK ou AVARIA"></th>    
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
@@ -88,34 +89,61 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let todosOsDados = []; // Cache para os filtros funcionarem rápido
+    let todosOsDados = [];
 
     onAuthStateChanged(auth, user => {
-        if(user) { document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase(); } 
+        if(user) { 
+            document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase(); 
+            carregarDadosAutomatico(); // Chama ao iniciar
+        } 
         else { window.location.href = "index.html"; }
     });
 
     document.getElementById('btnLogout').onclick = () => signOut(auth);
 
-    // FUNÇÃO PRINCIPAL PARA CARREGAR DADOS
-    async function carregarDados() {
+    // FUNÇÃO PARA PEGAR O INTERVALO DO MÊS ATUAL
+    function getDatasMesAtual() {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const diaHoje = String(hoje.getDate()).padStart(2, '0');
+        
+        return {
+            inicio: `${ano}-${mes}-01`,
+            fim: `${ano}-${mes}-${diaHoje}`
+        };
+    }
+
+    async function carregarDadosAutomatico() {
+        const datas = getDatasMesAtual();
+        // Onde 'data' é o campo YYYY-MM-DD no seu Firestore
+        const q = query(
+            collection(db, "expedicoes"), 
+            where("data", ">=", datas.inicio),
+            where("data", "<=", datas.fim),
+            orderBy("data", "desc")
+        );
+        await carregarDados(q);
+    }
+
+    async function carregarDados(customQuery = null) {
         const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando no Firebase...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando dados do mês atual...</td></tr>';
 
         try {
-            // 1. Mapeia Vínculos
+            // 1. Busca Equipes para Vínculos
             const equipeSnap = await getDocs(collection(db, "equipe"));
             let vinculos = {};
             equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo || "TERCEIRO");
 
-            // 2. Mapeia Avarias (Cruzamento de dados)
+            // 2. Busca Avarias Detalhadas
             const avariasSnap = await getDocs(collection(db, "avarias"));
             let mapaAvarias = {};
             avariasSnap.forEach(doc => {
@@ -126,8 +154,10 @@
                 }
             });
 
-            // 3. Busca Expedições
-            const expSnap = await getDocs(query(collection(db, "expedicoes"), orderBy("data", "desc")));
+            // 3. Busca Expedições (Filtro de Data já aplicado se vier via customQuery)
+            const q = customQuery || query(collection(db, "expedicoes"), orderBy("data", "desc"));
+            const expSnap = await getDocs(q);
+            
             todosOsDados = [];
 
             expSnap.forEach(docExp => {
@@ -135,18 +165,23 @@
                 const idExp = docExp.id;
                 const avariasDaExp = mapaAvarias[idExp] || null;
 
-                // Prepara a equipe com vínculos
                 const infoEquipe = (exp.equipe_carregamento || []).map(nome => `${nome} (${vinculos[nome] || 'TERCEIRO'})`);
+                
+                // Texto para busca interna nos filtros
+                let detalhesBusca = "";
+                if(avariasDaExp) {
+                    detalhesBusca = avariasDaExp.map(a => `${a.codigoProduto} ${a.nomeProduto} ${a.motivo}`).join(" ");
+                }
 
-                // Cria o objeto simplificado para a tabela
                 todosOsDados.push({
                     data: exp.data ? exp.data.split('-').reverse().join('/') : '-',
                     codigo: exp.codigo || exp.expedicao || 'N/A',
                     destino: exp.destino || '-',
                     placa: exp.placa || '-',
                     equipe: infoEquipe.join(', '),
-                    avarias: avariasDaExp, // Lista de objetos de avaria
-                    situacaoStr: avariasDaExp ? "AVARIA" : "OK" // Para facilitar o filtro de texto
+                    avarias: avariasDaExp,
+                    detalhesAvaria: detalhesBusca, // Campo invisível para o filtro funcionar
+                    situacaoStr: avariasDaExp ? "AVARIA" : "OK"
                 });
             });
 
@@ -154,29 +189,35 @@
 
         } catch (error) {
             console.error(error);
-            corpo.innerHTML = `<tr><td colspan="6" style="color:red;">Erro: ${error.message}</td></tr>`;
+            corpo.innerHTML = `<tr><td colspan="7" style="color:red;">Erro: ${error.message}</td></tr>`;
         }
     }
 
-    // FUNÇÃO PARA DESENHAR A TABELA
     function renderizarTabela(lista) {
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
 
-        if (lista.length === 0) {
-            corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum registro encontrado.</td></tr>';
-            return;
-        }
-
         lista.forEach(item => {
             let statusHtml = "";
+            let avariaDetalhadaHtml = "";
+
             if (item.avarias) {
                 statusHtml = `<span class="status-badge bg-avaria">⚠️ AVARIA</span>`;
                 item.avarias.forEach(a => {
-                    statusHtml += `<span class="detalhe-avaria"><strong>${a.quantidade}x</strong> ${a.descricao}</span>`;
+                    avariaDetalhadaHtml += `
+                        <div style="border-bottom: 1px dashed #ddd; margin-bottom: 5px; padding-bottom: 2px;">
+                            <span class="detalhe-avaria" style="color:#000; font-size:11px;">
+                                <strong>Cod: ${a.codigoProduto || 'N/A'}</strong> - ${a.nomeProduto || 'S/D'}
+                            </span>
+                            <span class="detalhe-avaria">
+                                <b>Motivo:</b> ${a.motivo} | <b>Qtd:</b> ${a.quantidade}
+                            </span>
+                            ${a.descricao ? `<span class="detalhe-avaria"><i>Obs: ${a.descricao}</i></span>` : ''}
+                        </div>`;
                 });
             } else {
-                statusHtml = `<span class="status-badge bg-ok">✅ SEM AVARIAS</span>`;
+                statusHtml = `<span class="status-badge bg-ok">✅ OK</span>`;
+                avariaDetalhadaHtml = `<span style="color:#999; font-size:11px;">Sem ocorrências</span>`;
             }
 
             const row = `
@@ -186,13 +227,14 @@
                     <td>${item.destino}</td>
                     <td>${item.placa}</td>
                     <td><small>${item.equipe}</small></td>
+                    <td>${avariaDetalhadaHtml}</td>
                     <td>${statusHtml}</td>
                 </tr>`;
             corpo.innerHTML += row;
         });
     }
 
-    // LÓGICA DE FILTROS (Image_323426 reference)
+    // Filtros em tempo real
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('keyup', () => {
             const filtros = {};
@@ -202,27 +244,20 @@
 
             const dadosFiltrados = todosOsDados.filter(item => {
                 return Object.keys(filtros).every(coluna => {
-                    // Lógica especial para filtrar a situação (OK ou AVARIA)
-                    if (coluna === 'situacao') {
-                        return item.situacaoStr.toLowerCase().includes(filtros[coluna]);
-                    }
                     return String(item[coluna]).toLowerCase().includes(filtros[coluna]);
                 });
             });
-
             renderizarTabela(dadosFiltrados);
         });
     });
 
-    // EXPORTAR EXCEL
     document.getElementById('btnExportExcel').onclick = () => {
         const table = document.getElementById("tabelaQualidade");
         const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `Relatorio_Qualidade_Simonetti.xlsx`);
+        XLSX.writeFile(wb, `Gestao_Qualidade_Simonetti.xlsx`);
     };
 
-    // Iniciar automaticamente
-    window.carregarDados = carregarDados;
+    window.carregarDados = () => carregarDados();
 </script>
 </body>
 </html>
