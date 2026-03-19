@@ -22,36 +22,38 @@
 <body>
 
 <div class="card">
-    <h2>Configuração Inicial</h2>
-    <p>Complete seus dados para acessar o sistema.</p>
+    <h2>Configuração de Acesso</h2>
+    <p>Defina seu perfil para liberar as permissões corretas.</p>
     
     <form id="formPerfil">
-        <label>Nome de Usuário</label>
-        <input type="text" id="nomeUser" placeholder="Digite seu nome completo" required>
+        <label>Nome Completo</label>
+        <input type="text" id="nomeUser" placeholder="Ex: Douglas Brito" required>
 
         <label>Nova Senha de Acesso</label>
         <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required minlength="6">
 
-        <label>Tipo de Função</label>
+        <label>Tipo de Função (Nível de Acesso)</label>
         <select id="funcaoUser" required>
-            <option value="" disabled selected>Selecione sua função...</option>
-            <option value="leitor">Leitor</option>
+            <option value="" disabled selected>Selecione seu perfil...</option>
+            <option value="colaborador">Colaborador (Expedição / Cadastro)</option>
+            <option value="usuario">Usuário Central (Conferência / Destino)</option>
+            <option value="leitor">Leitor (Apenas Relatórios)</option>
         </select>
 
-        <label>Sua Central (Origem/Vínculo)</label>
+        <label>Vínculo / Central</label>
         <select id="centralUser" required>
             <option value="" disabled selected>Carregando centrais...</option>
         </select>
 
         <button type="submit" id="btnFinalizar" class="btn-salvar">FINALIZAR E ENTRAR</button>
-        <span id="msgInfo">Aguardando preenchimento...</span>
+        <span id="msgInfo">Aguardando definição de perfil...</span>
     </form>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
@@ -65,78 +67,69 @@
 
     let currentUser = null;
 
-    // Monitora login e carrega centrais dinâmicas da coleção 'destinos'
     onAuthStateChanged(auth, async (user) => {
         if (user) { 
             currentUser = user; 
-            await carregarCentraisDoBanco();
+            await carregarDestinos();
         } else { 
             window.location.href = "index.html"; 
         }
     });
 
-    async function carregarCentraisDoBanco() {
+    async function carregarDestinos() {
         const select = document.getElementById('centralUser');
         try {
-            // Conecta na coleção 'destinos' conforme solicitado
-            const querySnapshot = await getDocs(collection(db, "destinos"));
-            select.innerHTML = '<option value="" disabled selected>Selecione sua Central</option>';
-            
-            if(querySnapshot.empty) {
-                // Fallback caso a coleção esteja vazia momentaneamente
-                const padrao = ["MATRIZ", "SERRA 113", "CONQUISTA", "BUERAREMA"];
-                padrao.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
-            } else {
-                querySnapshot.forEach((doc) => {
-                    const dados = doc.data();
-                    // Pega o campo 'nome' dentro do documento de destino
-                    if(dados.nome) {
-                        select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
-                    }
-                });
-            }
-        } catch (error) {
-            console.error("Erro ao carregar destinos:", error);
-            document.getElementById('msgInfo').innerText = "Erro ao carregar lista de centrais.";
-        }
+            const q = query(collection(db, "destinos"), orderBy("nome"));
+            const querySnapshot = await getDocs(q);
+            select.innerHTML = '<option value="" disabled selected>Selecione a Central</option>';
+            querySnapshot.forEach((doc) => {
+                const dados = doc.data();
+                if(dados.nome) {
+                    select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
+                }
+            });
+        } catch (e) { console.error(e); }
     }
 
     document.getElementById('formPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnFinalizar');
         const novaSenha = document.getElementById('novaSenha').value;
-        const msg = document.getElementById('msgInfo');
+        const funcaoSelecionada = document.getElementById('funcaoUser').value;
         
-        btn.innerText = "PROCESSANDO...";
+        btn.innerText = "CONFIGURANDO...";
         btn.disabled = true;
 
         try {
-            // 1. Atualiza a senha no Firebase Authentication
+            // 1. Atualiza a senha
             await updatePassword(currentUser, novaSenha);
 
-            // 2. Salva ou atualiza os dados na coleção 'usuarios'
+            // 2. Salva no Firestore com a lógica de níveis que você passou
             await setDoc(doc(db, "usuarios", currentUser.uid), {
                 nome: document.getElementById('nomeUser').value.toUpperCase(),
-                funcao: document.getElementById('funcaoUser').value,
+                funcao: funcaoSelecionada, // "admin", "colaborador", "usuario" ou "leitor"
+                nivel: funcaoSelecionada,  // Espelha a função no nível para facilitar o filtro
                 central: document.getElementById('centralUser').value,
                 email: currentUser.email,
-                nivel: "user", // Adm deve ser alterado manualmente no console
                 dataConfiguracao: new Date().toISOString()
             }, { merge: true });
 
-            alert("Cadastro finalizado com sucesso!");
-            window.location.href = "menu.html";
+            alert("Perfil configurado! Redirecionando...");
+            
+            // Redirecionamento inteligente baseado no que você definiu:
+            if (funcaoSelecionada === "usuario") {
+                window.location.href = "conferencia.html";
+            } else if (funcaoSelecionada === "leitor") {
+                window.location.href = "relatorio.html";
+            } else {
+                window.location.href = "menu.html";
+            }
 
         } catch (error) {
             console.error(error);
+            alert("Erro: " + error.message);
             btn.disabled = false;
             btn.innerText = "FINALIZAR E ENTRAR";
-            
-            if (error.code === 'auth/requires-recent-login') {
-                alert("Sessão expirada. Por favor, saia e entre novamente para definir sua senha.");
-            } else {
-                alert("Erro ao salvar: " + error.message);
-            }
         }
     });
 </script>
