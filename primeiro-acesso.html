@@ -6,74 +6,134 @@
     <title>Configurar Perfil - Simonetti</title>
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; }
-        body { font-family: sans-serif; background: var(--bg-body); padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 8px; max-width: 400px; margin: auto; }
-        h2 { color: var(--primary); margin-top: 0; }
-        label { display: block; margin-top: 15px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 25px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; }
+        p { text-align: center; color: #666; font-size: 14px; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        input:focus { border-color: var(--primary); outline: none; }
+        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        .btn-salvar:hover { background: #b71c1c; }
+        .loading-select { font-style: italic; color: #888; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Bem-vindo!</h2>
-    <p>Complete seu cadastro para continuar.</p>
+    <p>Olá! Defina seus dados de acesso para começar no sistema.</p>
     
     <form id="formPerfil">
-        <label>Nome de Usuário</label>
-        <input type="text" id="nomeUser" placeholder="Ex: João da Central" required>
+        <label>Nome</label>
+        <input type="text" id="nomeUser" placeholder="Ex: Douglas Brito" required>
+
+        <label>Definir Nova Senha</label>
+        <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required minlength="6">
 
         <label>Tipo de Função</label>
-        <select id="funcaoUser">
-            <option value="conferente">Conferente / Pátio</option>
-            <option value="central">Responsável Central (Destino)</option>
+        <select id="funcaoUser" required>
+            <option value="" disabled selected>Selecione...</option>
+            <option value="leitor">Leitor</option>
         </select>
 
         <label>Vínculo / Central</label>
-        <select id="centralUser">
-            <option value="MATRIZ">MATRIZ</option>
-            <option value="SERRA 113">CENTRAL DA SERRA 113</option>
-            <option value="CONQUISTA">CONQUISTA</option>
-            <option value="BURAREMA">BURAREMA</option>
+        <select id="centralUser" required>
+            <option value="" disabled selected>Carregando centrais...</option>
         </select>
+        <span id="loadMsg" class="loading-select"></span>
 
-        <button type="submit" class="btn-salvar">FINALIZAR E ENTRAR</button>
+        <button type="submit" id="btnFinalizar" class="btn-salvar">FINALIZAR E ENTRAR</button>
     </form>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", 
+        authDomain: "logistica-exp.firebaseapp.com", 
+        projectId: "logistica-exp" 
+    };
+    
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     let currentUser = null;
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) { currentUser = user; } else { window.location.href = "index.html"; }
+    // 1. Monitorar Usuário e Carregar Centrais do Banco
+    onAuthStateChanged(auth, async (user) => {
+        if (user) { 
+            currentUser = user; 
+            await carregarCentrais();
+        } else { 
+            window.location.href = "index.html"; 
+        }
     });
 
+    // Função para buscar as centrais cadastradas na sua coleção "centrais"
+    async function carregarCentrais() {
+        const select = document.getElementById('centralUser');
+        try {
+            const querySnapshot = await getDocs(collection(db, "centrais"));
+            select.innerHTML = '<option value="" disabled selected>Selecione a Central</option>';
+            
+            if(querySnapshot.empty) {
+                // Caso não tenha nada no banco ainda, ele cria opções padrão
+                const padrao = ["MATRIZ", "SERRA 113", "CONQUISTA", "BURAREMA"];
+                padrao.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            } else {
+                querySnapshot.forEach((doc) => {
+                    const dados = doc.data();
+                    // Assume que o campo no banco chama-se 'nome'
+                    select.innerHTML += `<option value="${dados.nome}">${dados.nome}</option>`;
+                });
+            }
+        } catch (error) {
+            console.error("Erro centrais:", error);
+            document.getElementById('loadMsg').innerText = "Erro ao carregar centrais.";
+        }
+    }
+
+    // 2. Salvar Dados e Atualizar Senha
     document.getElementById('formPerfil').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('btnFinalizar');
+        const novaSenha = document.getElementById('novaSenha').value;
         
+        btn.innerText = "SALVANDO...";
+        btn.disabled = true;
+
         try {
+            // Passo A: Atualizar a senha no Firebase Auth
+            await updatePassword(currentUser, novaSenha);
+
+            // Passo B: Salvar perfil no Firestore
             await setDoc(doc(db, "usuarios", currentUser.uid), {
-                nome: document.getElementById('nomeUser').value,
+                nome: document.getElementById('nomeUser').value.toUpperCase(),
                 funcao: document.getElementById('funcaoUser').value,
                 central: document.getElementById('centralUser').value,
                 email: currentUser.email,
-                nivel: "user" // O ADM você altera manualmente no banco para "admin"
+                nivel: "user", // Nível padrão
+                primeiroAcesso: false,
+                dataCadastro: new Date().toISOString()
             });
 
-            alert("Perfil configurado!");
-            window.location.href = "dashboard.html";
+            alert("Perfil e senha configurados com sucesso!");
+            window.location.href = "dashboard.html"; // Manda para o painel principal
+
         } catch (error) {
-            alert("Erro ao salvar perfil.");
+            console.error(error);
+            if (error.code === 'auth/requires-recent-login') {
+                alert("Por segurança, saia e entre novamente para mudar a senha.");
+            } else {
+                alert("Erro ao finalizar cadastro: " + error.message);
+            }
+            btn.innerText = "FINALIZAR E ENTRAR";
+            btn.disabled = false;
         }
     });
 </script>
