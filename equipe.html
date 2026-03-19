@@ -5,112 +5,148 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Equipe - Simonetti</title>
     <style>
-        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --text: #333; --border: #f0d8d8; }
-        body { font-family: sans-serif; background: var(--bg-body); margin: 0; padding: 15px; color: var(--text); }
-        header { background: var(--primary); color: white; padding: 15px; margin: -15px -15px 15px -15px; font-weight: bold; text-align: center; }
+        :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-back { color: white; text-decoration: none; font-size: 20px; }
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
         
-        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         
-        label { display: block; margin-top: 12px; font-weight: bold; font-size: 13px; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { width: 100%; background: #2e7d32; color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         
-        .btn-salvar { width: 100%; background: var(--primary); color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th { background: #eee; padding: 10px; text-align: left; font-size: 12px; border-bottom: 2px solid var(--border); }
-        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        
-        .badge-mei { background: #e3f2fd; color: #1565c0; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .badge-terceiro { background: #f3e5f5; color: #7b1fa2; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 12px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .btn-acao { border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 5px; }
+        .edit { background: #fbc02d; }
+        .del { background: #ffcdd2; color: #c62828; }
     </style>
 </head>
 <body>
 
-<header>GESTÃO DE EQUIPE E PARCEIROS</header>
+<header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="menu.html" class="btn-back">⬅️</a>
+        <span>Gestão de Equipe Carregamento</span>
+    </div>
+</header>
 
 <div class="container">
     <div class="card">
-        <h3>Novo Cadastro</h3>
+        <h2 id="tituloForm">CADASTRAR MEMBRO</h2>
         <form id="formEquipe">
-            <label>Nome Completo</label>
-            <input type="text" id="nomePessoa" placeholder="Ex: João Silva" required>
-
-            <label>CPF</label>
-            <input type="text" id="cpfPessoa" placeholder="000.000.000-00" required>
-
-            <label>Tipo de Vínculo</label>
-            <select id="vinculoPessoa">
-                <option value="MEI">MEI (Microempreendedor)</option>
-                <option value="TERCEIRIZADO">Terceirizado (Avulso)</option>
-            </select>
-
-            <button type="submit" class="btn-salvar">CADASTRAR NA BASE</button>
+            <input type="hidden" id="editId">
+            <div class="grid-form">
+                <div>
+                    <label>NOME COMPLETO</label>
+                    <input type="text" id="nomePessoa" required style="text-transform: uppercase;">
+                </div>
+                <div>
+                    <label>CPF</label>
+                    <input type="text" id="cpfPessoa" placeholder="000.000.000-00" maxlength="14" required>
+                </div>
+                <div>
+                    <label>VÍNCULO</label>
+                    <select id="vinculoPessoa">
+                        <option value="MEI">MEI</option>
+                        <option value="TERCEIRO">TERCEIRO</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-save" id="btnSalvar">SALVAR PESSOA</button>
         </form>
     </div>
 
-    <div class="card" style="overflow-x: auto;">
-        <h3>Pessoas Cadastradas</h3>
-        <table>
+    <div class="card">
+        <h2>LISTA DE COLABORADORES</h2>
+        <table id="tabelaEquipe">
             <thead>
                 <tr>
                     <th>NOME</th>
                     <th>VÍNCULO</th>
                     <th>CPF</th>
+                    <th>AÇÕES</th>
                 </tr>
             </thead>
-            <tbody id="listaEquipeCorpo">
-                </tbody>
+            <tbody id="corpoEquipe"></tbody>
         </table>
     </div>
 </div>
 
 <script type="module">
-    import { db, collection, addDoc, serverTimestamp } from './firebase-config.js';
-    import { query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const form = document.getElementById('formEquipe');
-    const tabela = document.getElementById('listaEquipeCorpo');
+    const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    // 1. Salvar no Firebase
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button');
-        btn.disabled = true;
-
-        try {
-            await addDoc(collection(db, "equipe"), {
-                nome: document.getElementById('nomePessoa').value.toUpperCase(),
-                cpf: document.getElementById('cpfPessoa').value,
-                vinculo: document.getElementById('vinculoPessoa').value,
-                criadoEm: serverTimestamp()
-            });
-            alert("Pessoa cadastrada!");
-            form.reset();
-        } catch (err) {
-            alert("Erro ao cadastrar.");
-        } finally {
-            btn.disabled = false;
-        }
+    // MÁSCARA CPF
+    document.getElementById('cpfPessoa').addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g,"");
+        v = v.replace(/(\num{3})(\num{3})(\num{3})(\num{2})/, "$1.$2.$3-$4");
+        e.target.value = v;
     });
 
-    // 2. Listar Pessoas em Tempo Real
-    const q = query(collection(db, "equipe"), orderBy("nome", "asc"));
-    onSnapshot(q, (snapshot) => {
-        tabela.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const p = doc.data();
-            const badgeClass = p.vinculo === 'MEI' ? 'badge-mei' : 'badge-terceiro';
-            tabela.innerHTML += `
+    // SALVAR / EDITAR
+    document.getElementById('formEquipe').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const dados = {
+            nome: document.getElementById('nomePessoa').value.toUpperCase(),
+            cpf: document.getElementById('cpfPessoa').value,
+            vinculo: document.getElementById('vinculoPessoa').value,
+            atualizadoEm: serverTimestamp()
+        };
+
+        if(id) {
+            await updateDoc(doc(db, "equipe", id), dados);
+        } else {
+            await addDoc(collection(db, "equipe"), dados);
+        }
+        e.target.reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('tituloForm').innerText = "CADASTRAR MEMBRO";
+    });
+
+    // LISTAR
+    onSnapshot(query(collection(db, "equipe"), orderBy("nome")), snap => {
+        const corpo = document.getElementById('corpoEquipe');
+        corpo.innerHTML = "";
+        snap.forEach(d => {
+            const p = d.data();
+            corpo.innerHTML += `
                 <tr>
-                    <td><strong>${p.nome}</strong></td>
-                    <td><span class="${badgeClass}">${p.vinculo}</span></td>
+                    <td>${p.nome}</td>
+                    <td>${p.vinculo}</td>
                     <td>${p.cpf}</td>
+                    <td>
+                        <button class="btn-acao edit" onclick="editar('${d.id}')">✏️</button>
+                        <button class="btn-acao del" onclick="excluir('${d.id}')">🗑️</button>
+                    </td>
                 </tr>
             `;
         });
     });
-</script>
 
+    window.editar = async (id) => {
+        const d = await getDoc(doc(db, "equipe", id));
+        const p = d.data();
+        document.getElementById('editId').value = id;
+        document.getElementById('nomePessoa').value = p.nome;
+        document.getElementById('cpfPessoa').value = p.cpf;
+        document.getElementById('vinculoPessoa').value = p.vinculo;
+        document.getElementById('tituloForm').innerText = "EDITANDO MEMBRO";
+    };
+
+    window.excluir = async (id) => {
+        if(confirm("Excluir colaborador?")) await deleteDoc(doc(db, "equipe", id));
+    };
+</script>
 </body>
 </html>
