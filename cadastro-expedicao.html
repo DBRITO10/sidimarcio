@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Expedições - Simonetti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         :root { --primary: #d32f2f; --bg-body: #fdf2f2; --white: #fff; --text: #333; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text); }
@@ -13,7 +17,7 @@
         .btn-back { color: white; text-decoration: none; font-size: 20px; }
         .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .container { padding: 20px; max-width: 1100px; margin: auto; }
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { color: var(--primary); margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--bg-body); padding-bottom: 10px; }
 
@@ -23,12 +27,16 @@
         
         .btn-salvar { width: 100%; background: #2e7d32; color: white; border: none; padding: 15px; margin-top: 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
-        /* Filtros e Resumo */
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .resumo-box { display: flex; gap: 15px; }
         .resumo-item { background: #fff; padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .resumo-item span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
         .resumo-item strong { font-size: 18px; color: var(--primary); }
+
+        .export-btns { display: flex; gap: 5px; margin-top: 10px; }
+        .btn-export { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: white; }
+        .btn-excel { background: #1b5e20; }
+        .btn-pdf { background: #b71c1c; }
 
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
@@ -40,10 +48,11 @@
         .status-separacao { background: #fff3e0; color: #ef6c00; }
         .status-concluido { background: #e8f5e9; color: #2e7d32; }
 
-        .btn-acao { padding: 5px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-right: 2px; }
+        .btn-acao { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-right: 2px; }
         .btn-edit { background: #ffeb3b; color: #333; }
         .btn-del { background: #ffebee; color: #c62828; }
-        .btn-status { background: var(--primary); color: white; }
+        .btn-status-sep { background: #ef6c00; color: white; }
+        .btn-status-ok { background: #2e7d32; color: white; }
     </style>
 </head>
 <body>
@@ -112,7 +121,7 @@
                 <strong id="totalExp">0</strong>
             </div>
             <div class="resumo-item">
-                <span>Total Carros (Placas Únicas)</span>
+                <span>Total Carros</span>
                 <strong id="totalCarros">0</strong>
             </div>
         </div>
@@ -129,10 +138,15 @@
         </div>
     </div>
 
+    <div class="export-btns">
+        <button onclick="exportarExcel()" class="btn-export btn-excel">📊 EXPORTAR EXCEL</button>
+        <button onclick="exportarPDF()" class="btn-export btn-pdf">📄 EXPORTAR PDF</button>
+    </div>
+
     <div class="card">
         <h2>HISTÓRICO DE EXPEDIÇÕES</h2>
         <div class="table-wrapper">
-            <table>
+            <table id="tabelaExpedicoes">
                 <thead>
                     <tr>
                         <th>DATA</th>
@@ -165,7 +179,7 @@
 
     let veiculosCache = {};
 
-    // MÁSCARA DE PESO (Dinâmica)
+    // MÁSCARA DE PESO
     document.getElementById('pesoExp').addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, "");
         v = (v / 100).toFixed(2) + "";
@@ -179,13 +193,15 @@
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
             
-            // Setar data de hoje no formulário por padrão
-            document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataExp').value = hoje;
+            document.getElementById('filtroInicio').value = hoje;
+            document.getElementById('filtroFim').value = hoje;
             
             carregarPlacas();
             carregarDestinos();
             carregarConferentes();
-            listarExpedicoes(); // Carrega inicial (hoje)
+            listarExpedicoes(hoje, hoje); 
         } else { window.location.href = "index.html"; }
     });
 
@@ -196,13 +212,10 @@
             const v = doc.data();
             veiculosCache[v.placa] = v.tipo;
             const opt = document.createElement('option');
-            opt.value = v.placa;
-            opt.textContent = v.placa;
+            opt.value = v.placa; opt.textContent = v.placa;
             selectPlaca.appendChild(opt);
         });
-        selectPlaca.addEventListener('change', (e) => {
-            document.getElementById('tipoVeic').value = veiculosCache[e.target.value] || "";
-        });
+        selectPlaca.onchange = (e) => document.getElementById('tipoVeic').value = veiculosCache[e.target.value] || "";
     }
 
     async function carregarDestinos() {
@@ -217,8 +230,7 @@
         snap.forEach(doc => { select.innerHTML += `<option value="${doc.data().nome}">${doc.data().nome}</option>`; });
     }
 
-    // SALVAR
-    document.getElementById('formExpedicao').addEventListener('submit', async (e) => {
+    document.getElementById('formExpedicao').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('editId').value;
         const dados = {
@@ -233,29 +245,24 @@
             atualizadoEm: serverTimestamp()
         };
 
-        try {
-            if (id) {
-                await updateDoc(doc(db, "expedicoes", id), dados);
-                alert("Atualizado!");
-            } else {
-                dados.status = "CRIADO";
-                dados.criadoEm = serverTimestamp();
-                await addDoc(collection(db, "expedicoes"), dados);
-                alert("Salvo com sucesso!");
-            }
-            e.target.reset();
-            document.getElementById('editId').value = "";
-            document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
-        } catch (err) { alert("Erro ao salvar."); }
-    });
-
-    // LISTAGEM E LÓGICA DE CARROS ÚNICOS
-    function listarExpedicoes(dataInicio = null, dataFim = null) {
-        let q = query(collection(db, "expedicoes"), orderBy("data", "desc"));
-        
-        if (dataInicio && dataFim) {
-            q = query(collection(db, "expedicoes"), where("data", ">=", dataInicio), where("data", "<=", dataFim));
+        if (id) {
+            await updateDoc(doc(db, "expedicoes", id), dados);
+            alert("Atualizado!");
+        } else {
+            dados.status = "CRIADO";
+            dados.criadoEm = serverTimestamp();
+            await addDoc(collection(db, "expedicoes"), dados);
+            alert("Salvo!");
         }
+        e.target.reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('dataExp').value = new Date().toISOString().split('T')[0];
+    };
+
+    function listarExpedicoes(inicio, fim) {
+        const q = query(collection(db, "expedicoes"), 
+                  where("data", ">=", inicio), 
+                  where("data", "<=", fim));
 
         onSnapshot(q, (snap) => {
             const corpo = document.getElementById('corpoTabela');
@@ -263,26 +270,26 @@
             let countExp = 0;
             let placasUnicas = new Set();
 
-            snap.forEach(d => {
+            snap.docs.sort((a,b) => b.data().data.localeCompare(a.data().data)).forEach(d => {
                 const item = d.data();
                 countExp++;
-                placasUnicas.add(item.placa + item.data); // Chave única: Placa + Dia
-
-                const dataFormatada = item.data.split('-').reverse().join('/');
+                placasUnicas.add(item.placa + item.data);
+                const dataF = item.data.split('-').reverse().join('/');
                 
                 corpo.innerHTML += `
                     <tr>
-                        <td>${dataFormatada}</td>
+                        <td>${dataF}</td>
                         <td><strong>${item.codigo}</strong></td>
                         <td>${item.placa}</td>
                         <td>${item.tipo}</td>
                         <td>${item.destino}</td>
-                        <td>${item.box || '-'}</td>
-                        <td>${item.peso || '0,00'}</td>
+                        <td>${item.box}</td>
+                        <td>${item.peso}</td>
                         <td>${item.conferente}</td>
                         <td><span class="badge ${getStatusClass(item.status)}">${item.status}</span></td>
                         <td>
-                            <button class="btn-acao btn-status" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
+                            <button class="btn-acao btn-status-sep" onclick="mudarStatus('${d.id}', 'EM SEPARAÇÃO')">SEP</button>
+                            <button class="btn-acao btn-status-ok" onclick="mudarStatus('${d.id}', 'CONFERÊNCIA FINALIZADA')">OK</button>
                             <button class="btn-acao btn-edit" onclick="editar('${d.id}')">✏️</button>
                             <button class="btn-acao btn-del" onclick="excluir('${d.id}')">🗑️</button>
                         </td>
@@ -294,12 +301,8 @@
         });
     }
 
-    // Filtro Manual
     document.getElementById('btnFiltrar').onclick = () => {
-        const inicio = document.getElementById('filtroInicio').value;
-        const fim = document.getElementById('filtroFim').value;
-        if(inicio && fim) listarExpedicoes(inicio, fim);
-        else alert("Selecione as duas datas.");
+        listarExpedicoes(document.getElementById('filtroInicio').value, document.getElementById('filtroFim').value);
     };
 
     function getStatusClass(s) {
@@ -308,10 +311,8 @@
         return 'status-concluido';
     }
 
-    window.mudarStatus = async (id, novoStatus) => {
-        await updateDoc(doc(db, "expedicoes", id), { status: novoStatus });
-    };
-
+    window.mudarStatus = async (id, status) => await updateDoc(doc(db, "expedicoes", id), { status });
+    
     window.editar = async (id) => {
         const d = await getDoc(doc(db, "expedicoes", id));
         const data = d.data();
@@ -319,20 +320,35 @@
         document.getElementById('codExp').value = data.codigo;
         document.getElementById('placa').value = data.placa;
         document.getElementById('tipoVeic').value = data.tipo;
-        document.getElementById('boxExp').value = data.box || "";
-        document.getElementById('pesoExp').value = data.peso || "";
+        document.getElementById('boxExp').value = data.box;
+        document.getElementById('pesoExp').value = data.peso;
         document.getElementById('destinoExp').value = data.destino;
         document.getElementById('conferenteExp').value = data.conferente;
         document.getElementById('dataExp').value = data.data;
         document.getElementById('tituloForm').innerText = "EDITANDO EXPEDIÇÃO";
-        window.scrollTo(0,0);
     };
 
-    window.excluir = async (id) => {
-        if(confirm("Deseja excluir?")) await deleteDoc(doc(db, "expedicoes", id));
-    };
-
+    window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
     document.getElementById('btnSair').onclick = () => signOut(auth);
+
+    // FUNÇÕES DE EXPORTAÇÃO (Globais para o HTML acessar)
+    window.exportarExcel = () => {
+        const wb = XLSX.utils.table_to_book(document.getElementById('tabelaExpedicoes'));
+        XLSX.writeFile(wb, `Expedicoes_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
+    };
+
+    window.exportarPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.text("Relatório de Expedições - Móveis Simonetti", 14, 15);
+        doc.autoTable({ 
+            html: '#tabelaExpedicoes',
+            startY: 20,
+            theme: 'grid',
+            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] // Remove a coluna de Ações no PDF
+        });
+        doc.save(`Expedicoes_Simonetti_${new Date().toLocaleDateString()}.pdf`);
+    };
 </script>
 </body>
 </html>
