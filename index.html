@@ -53,7 +53,7 @@
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
             
             if (userDoc.exists()) {
-                window.location.href = "dashboard.html";
+                window.location.href = "menu.html";
             } else {
                 window.location.href = "primeiro-acesso.html";
             }
