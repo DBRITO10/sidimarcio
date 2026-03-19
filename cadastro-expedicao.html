@@ -397,7 +397,7 @@ window.exportarPDF = () => {
     const totalExp = document.getElementById('totalExp').innerText;
     const totalCarros = document.getElementById('totalCarros').innerText;
     doc.setFontSize(10);
-    doc.text(`CARGAS: ${totalCarros} | TOTAL EXPEDIÇÕES: ${totalExp}`, 220, 16);
+    doc.text(`CARROS: ${totalCarros} | TOTAL EXPEDIÇÕES: ${totalExp}`, 220, 16);
 
     // Preparar dados e resumo de veículos
     const body = [];
@@ -460,7 +460,7 @@ window.exportarPDF = () => {
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("RESUMO DE VEÍCULOS (POR CARGA):", 15, finalY);
+    doc.text("RESUMO POR TIPOS DE VEÍCULOS:", 15, finalY);
 
     const summaryData = Object.keys(resVeic).map(k => [k, resVeic[k]]);
     
