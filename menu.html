@@ -22,11 +22,11 @@
             min-height: 100vh;
         }
 
-        /* Barra Superior Ajustada */
+        /* Barra Superior */
         header {
             background-color: var(--primary);
             color: var(--white);
-            padding: 10px 20px;
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -40,7 +40,8 @@
             font-size: 18px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            color: #ffffff;
         }
 
         .user-section {
@@ -49,13 +50,13 @@
             gap: 15px;
         }
 
-        .user-info { font-weight: 400; font-size: 14px; }
+        .user-info { font-weight: 400; font-size: 14px; color: #ffffff; }
         
         .btn-sair {
             background: rgba(255, 255, 255, 0.2);
-            border: 1px solid var(--white);
-            color: var(--white);
-            padding: 6px 12px;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            padding: 6px 15px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
@@ -63,17 +64,17 @@
             transition: 0.3s;
         }
 
-        .btn-sair:hover { background: var(--white); color: var(--primary); }
+        .btn-sair:hover { background: #ffffff; color: var(--primary); }
 
-        /* Grid Responsivo para PC e Celular */
+        /* Container de Cards Responsivo */
         .container {
             flex: 1;
             padding: 25px;
             display: grid;
-            /* No PC: 4 ou 3 colunas | No Celular: 2 colunas */
+            /* No PC: Ajusta colunas automaticamente | No Celular: 2 colunas */
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
@@ -86,13 +87,13 @@
             text-align: center;
             text-decoration: none;
             color: var(--text);
-            display: none; /* JS libera conforme o nível */
+            display: none; /* JS controla a exibição */
             flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: all 0.25s ease-in-out;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            border: 1px solid #f0f0f0;
+            border: 1px solid #eee;
         }
 
         .card:hover {
@@ -102,17 +103,15 @@
         }
 
         .card i { 
-            font-size: 45px; 
+            font-size: 40px; 
             margin-bottom: 15px; 
             display: block;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
 
         .card span { 
             font-weight: 700; 
             font-size: 13px; 
             text-transform: uppercase; 
-            line-height: 1.2;
             color: #444;
         }
 
@@ -125,8 +124,8 @@
             border-top: 1px solid #eee;
         }
 
-        /* Ajustes Mobile */
-        @media (max-width: 600px) {
+        /* Responsividade para Celulares Pequenos */
+        @media (max-width: 480px) {
             .container { 
                 grid-template-columns: repeat(2, 1fr); 
                 padding: 15px;
@@ -134,7 +133,7 @@
             }
             .header-title { font-size: 14px; }
             .card { padding: 20px 10px; }
-            .card i { font-size: 35px; }
+            .card i { font-size: 32px; }
             .card span { font-size: 11px; }
         }
     </style>
@@ -150,8 +149,8 @@
 </header>
 
 <div class="container" id="menuContainer">
-    <a href="relatorio.html" class="card" data-level="leitor,usuario,colaborador,admin">
-        <i>📊</i><span>Relatório de Expedição</span>
+    <a href="relatorio.html" class="card" data-level="leitor,colaborador,admin">
+        <i>📊</i><span>Expedição do Dia</span>
     </a>
 
     <a href="cadastro-expedicao.html" class="card" data-level="colaborador,admin">
@@ -181,13 +180,13 @@
     <a href="equipe.html" class="card" data-level="admin">
         <i>👥</i><span>Equipe Carregamento</span>
     </a>
-    
+
     <a href="cadastrar-conferente.html" class="card" data-level="admin">
         <i>👮‍♂️</i><span>Conferentes</span>
-    </a>     
+    </a>      
 
     <a href="veiculos.html" class="card" data-level="admin">
-        <i>🚚</i><span>Frota Logística</span>
+        <i>🚚</i><span>Cadastro Frota</span>
     </a>
 
     <a href="historico.html" class="card" data-level="admin">
@@ -195,7 +194,7 @@
     </a>
 </div>
 
-<footer>Móveis Simonetti - Logística & Expedição v2.5</footer>
+<footer>Móveis Simonetti - Logística & Expedição v2.6</footer>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -219,35 +218,42 @@
                 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    // Exibe apenas o primeiro nome
-                    document.getElementById('userName').innerText = userData.nome ? userData.nome.split(' ')[0] : "Usuário"; 
                     
-                    const nivelUsuario = userData.nivel || 'leitor';
+                    // Atualiza o nome no Header
+                    const nomeExibicao = userData.nome ? userData.nome.split(' ')[0] : "Usuário";
+                    document.getElementById('userName').innerText = nomeExibicao.toUpperCase();
+                    
+                    // Pega o nível (ou assume 'leitor' se estiver vazio)
+                    const nivel = userData.nivel || 'leitor';
+                    
+                    // Filtra os cards baseado no data-level
                     const cards = document.querySelectorAll('.card');
-                    
-                    // Lógica de visibilidade dos cards
                     cards.forEach(card => {
-                        const permissoes = card.getAttribute('data-level').split(',');
-                        if (permissoes.includes(nivelUsuario)) {
+                        const permitidos = card.getAttribute('data-level').split(',');
+                        if (permitidos.includes(nivel)) {
                             card.style.display = 'flex';
                         } else {
                             card.style.display = 'none';
                         }
                     });
+
                 } else {
-                    // Se o usuário está logado mas não tem documento no Firestore, manda configurar perfil
+                    // Se logado mas sem perfil, redireciona
                     window.location.href = "perfil.html";
                 }
             } catch (error) {
-                console.error("Erro ao carregar nível:", error);
+                console.error("Erro ao carregar permissões:", error);
             }
         } else {
             window.location.href = "index.html";
         }
     });
 
+    // Botão Sair
     document.getElementById('btnSair').onclick = () => {
-        signOut(auth).then(() => window.location.href = "index.html");
+        if(confirm("Deseja sair do sistema?")) {
+            signOut(auth).then(() => window.location.href = "index.html");
+        }
     };
 </script>
 
