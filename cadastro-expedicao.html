@@ -325,11 +325,103 @@
     window.excluir = async (id) => { if(confirm("Excluir?")) await deleteDoc(doc(db, "expedicoes", id)); };
     document.getElementById('btnSair').onclick = () => signOut(auth);
 
-    // Exportações
-    window.exportarExcel = () => {
-        const wb = XLSX.utils.table_to_book(document.getElementById('tabelaExpedicoes'));
-        XLSX.writeFile(wb, `Expedicoes_${new Date().toLocaleDateString()}.xlsx`);
-    };
+// --- EXPORTAÇÃO EXCEL (SEM COLUNA AÇÃO) ---
+window.exportarExcel = () => {
+    // Cria uma cópia da tabela para manipular sem afetar a tela do usuário
+    const tabelaOriginal = document.getElementById('tabelaExpedicoes');
+    const copiaTabela = tabelaOriginal.cloneNode(true);
+    
+    // Remove a última coluna (AÇÕES) de cada linha da cópia
+    const linhas = copiaTabela.querySelectorAll('tr');
+    linhas.forEach(linha => {
+        if (linha.lastElementChild) {
+            linha.removeChild(linha.lastElementChild);
+        }
+    });
+
+    const wb = XLSX.utils.table_to_book(copiaTabela);
+    XLSX.writeFile(wb, `Expedicoes_${new Date().toLocaleDateString()}.xlsx`);
+};
+
+// --- EXPORTAÇÃO PDF (ESTILIZADA COM LOGO MS) ---
+window.exportarPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); // Paisagem
+    const totalExp = document.getElementById('totalExp').innerText;
+    const totalCarros = document.getElementById('totalCarros').innerText;
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+
+    // Cabeçalho: Círculo Vermelho "MS"
+    doc.setFillColor(211, 47, 47);
+    doc.circle(20, 15, 8, 'F'); 
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("MS", 16, 17);
+
+    // Título Principal
+    doc.setTextColor(51, 51, 51);
+    doc.setFontSize(16);
+    doc.text("EXPEDIÇÃO_MÓVEIS SIMONETTI", 35, 17);
+
+    // Resumo Superior Direito
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`CARGAS: ${totalCarros} | TOTAL EXPEDIÇÕES: ${totalExp}`, 215, 17);
+    
+    // Linha Vermelha Divisória
+    doc.setDrawColor(211, 47, 47);
+    doc.setLineWidth(1);
+    doc.line(15, 25, 282, 25);
+
+    // Gerar Tabela no PDF
+    doc.autoTable({
+        html: '#tabelaExpedicoes',
+        startY: 30,
+        theme: 'grid',
+        headStyles: { 
+            fillColor: [211, 47, 47], 
+            textColor: [255, 255, 255],
+            fontSize: 8,
+            halign: 'center'
+        },
+        styles: { fontSize: 8, cellPadding: 2 },
+        // Define quais colunas exportar (0 a 8), ignorando a 9 (Ações)
+        columns: [
+            { header: 'DATA', dataKey: '0' },
+            { header: 'EXPEDIÇÃO', dataKey: '1' },
+            { header: 'PLACA', dataKey: '2' },
+            { header: 'TIPO', dataKey: '3' },
+            { header: 'DESTINO', dataKey: '4' },
+            { header: 'BOX', dataKey: '5' },
+            { header: 'PESO', dataKey: '6' },
+            { header: 'CONFERENTE', dataKey: '7' },
+            { header: 'STATUS', dataKey: '8' }
+        ],
+        didParseCell: function(data) {
+            // Se for a coluna de Status, destaca o texto em verde se estiver finalizado
+            if (data.section === 'body' && data.column.index === 8) {
+                const txt = data.cell.raw.innerText || "";
+                if (txt.includes("FINALIZADO") || txt.includes("✅")) {
+                    data.cell.styles.textColor = [46, 125, 50];
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        }
+    });
+
+    // Rodapé com data de geração
+    const finalY = doc.lastAutoTable.finalY || 30;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Relatório extraído em: ${dataAtual}`, 15, finalY + 10);
+
+    doc.save(`Expedicoes_Simonetti_${dataAtual.replace(/\//g, '-')}.pdf`);
+};
+
+// Vinculando as funções aos botões do HTML
+window.exportarExcel = exportarExcel;
+window.exportarPDF = exportarPDF;
 </script>
 </body>
 </html>
