@@ -83,8 +83,8 @@
     <div class="banner-title">EXPEDIÇÃO_MÓVEIS SIMONETTI</div>
 
     <div class="charts-row">
-        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES (TOTAL)</h3><canvas id="chartStatus"></canvas></div>
-        <div class="chart-card"><h3>VEÍCULOS ÚNICOS NO PÁTIO</h3><canvas id="chartVeiculos"></canvas></div>
+        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES</h3><canvas id="chartStatus"></canvas></div>
+        <div class="chart-card"><h3>VEÍCULOS</h3><canvas id="chartVeiculos"></canvas></div>
     </div>
 
     <div class="kpi-container"><div class="kpi-badge" id="txtKpi">CARROS: 0 | EXPEDIÇÕES: 0</div></div>
@@ -120,12 +120,14 @@
 <div id="modalF" class="modal">
     <div class="modal-content">
         <div class="modal-header" id="mTit">FILTRAR</div>
+        <div class="modal-selection-tools">
+            <button class="btn-selection" onclick="marcarTodos(true)">MARCAR TODOS</button>
+            <button class="btn-selection" onclick="marcarTodos(false)">NENHUM</button>
+        </div>
         <div class="modal-body" id="mBody"></div>
         <div class="modal-footer">
-            <button class="btn-m btn-m-all" onclick="checkTodos(true)">Todos</button>
-            <button class="btn-m btn-m-all" onclick="checkTodos(false)">Nenhum</button>
-            <button class="btn-m btn-m-can" onclick="fecharF()">Sair</button>
-            <button class="btn-m btn-m-apply" onclick="aplicarF()">Aplicar Filtro</button>
+            <button class="btn-m btn-m-can" onclick="fecharF()">SAIR</button>
+            <button class="btn-m btn-m-apply" onclick="aplicarF()">APLICAR</button>
         </div>
     </div>
 </div>
@@ -258,7 +260,13 @@
         });
         document.getElementById('modalF').style.display = 'block';
     };
-
+    
+    // NOVA FUNÇÃO: Marcar todos ou nenhum
+    window.marcarTodos = (status) => {
+        const checks = document.querySelectorAll('.filtro-check');
+        checks.forEach(c => c.checked = status);
+    };
+    
     window.aplicarF = () => {
         filtrosAtivos[colAtual] = Array.from(document.querySelectorAll('#mBody input:checked')).map(i => i.value);
         document.getElementById(`f-${colAtual}`).classList.toggle('active', filtrosAtivos[colAtual].length > 0);
