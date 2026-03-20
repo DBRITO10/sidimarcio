@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expedição Simonetti - Douglas Brito</title>
+    <title>Expedição Simonetti - Dashboard Douglas</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,63 +12,65 @@
 
     <style>
         :root { 
-            --primary: #b71c1c; --secondary: #d32f2f; --bg: #f4f7f6;
-            --carreta: #1b5e20; --truck: #4682B4; --v34: #7b1fa2; --toco: #ffeb3b;
-            --finalizado: #1b5e20; --separacao: #ef6c00;
+            --primary: #b71c1c; --secondary: #d32f2f; --bg: #fdf2f2;
+            --carreta: #1b5e20; --truck: #03a9f4; --v34: #7b1fa2; --toco: #fbc02d;
+            --finalizado: #1b5e20; --separacao: #e65100; --criado: #0d47a1; --conf-finalizada: #4a148c;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: #333; }
         header { background: var(--secondary); color: white; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 50px; }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .btn-header { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 12px; }
 
-        .container { padding: 10px 15px; }
-        .banner-title { background: var(--primary); color: white; text-align: center; padding: 8px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+        .container { padding: 15px; max-width: 1400px; margin: auto; }
+        .banner-title { background: var(--primary); color: white; text-align: center; padding: 10px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        /* Dashboard Compacto */
-        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px; justify-items: center; }
-        .chart-card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
-        .chart-card h3 { font-size: 12px; margin-bottom: 10px; color: #666; }
-        canvas { max-height: 180px !important; }
+        /* Dashboard */
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .chart-card h3 { font-size: 14px; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        canvas { max-height: 220px !important; }
 
-        .kpi-container { text-align: center; margin-bottom: 15px; }
-        .kpi-badge { border: 2px solid var(--secondary); color: var(--secondary); padding: 5px 20px; border-radius: 20px; font-size: 16px; font-weight: bold; background: white; display: inline-block; }
+        .kpi-container { text-align: center; margin-bottom: 20px; }
+        .kpi-badge { border: 2px solid var(--secondary); color: var(--secondary); padding: 8px 25px; border-radius: 30px; font-size: 18px; font-weight: bold; background: white; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        .toolbar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-        .search-box { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1; max-width: 300px; }
-        .btn-group { display: flex; gap: 5px; }
+        .toolbar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+        .search-box { padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; flex-grow: 1; max-width: 400px; outline: none; }
+        .search-box:focus { border-color: var(--primary); }
 
-        /* Tabela Zebrada */
-        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* Tabela */
+        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #eee; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; }
-        th { background: var(--primary); color: white; padding: 10px 5px; font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; }
-        tbody tr:nth-child(even) { background-color: #f8f9fa; }
-        tbody tr:nth-child(odd) { background-color: #ffffff; }
-        td { padding: 8px 5px; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 500; }
+        th { background: #f8f8f8; color: #666; padding: 12px 5px; font-size: 11px; cursor: pointer; border-bottom: 2px solid #eee; text-transform: uppercase; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #444; }
+        tbody tr:hover { background: #fff9f9; }
 
-        /* Badges Corretos */
-        .badge { padding: 4px 8px; border-radius: 12px; color: white; font-weight: bold; font-size: 10px; display: inline-block; min-width: 80px; }
+        /* Badges de Cores - Sincronizado com a outra página */
+        .badge { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; display: inline-block; min-width: 90px; text-transform: uppercase; }
         .st-FINALIZADO { background: var(--finalizado); }
-        .st-SEPARACAO { background: var(--separacao); }
-        .v-CARRETA { background: var(--carreta); }
+        .st-EM_SEPARAÇÃO { background: var(--separacao); }
+        .st-CRIADO { background: var(--criado); }
+        .st-CONFERÊNCIA_FINALIZADA { background: var(--conf-finalizada); }
+
+        .v-CARRETA, .v-CARRETTA { background: var(--carreta); }
         .v-TRUCK { background: var(--truck); }
         .v-34 { background: var(--v34); }
         .v-TOCO { background: var(--toco); color: #000; }
 
-        .btn-th-filter { background: #fff; color: var(--primary); border: none; padding: 2px 5px; border-radius: 3px; font-size: 9px; cursor: pointer; margin-top: 4px; display: block; width: 80%; margin-inline: auto; font-weight: bold; }
-        .btn-th-filter.active { background: #ffeb3b; }
+        .btn-th-filter { background: var(--primary); color: #fff; border: none; padding: 3px 8px; border-radius: 3px; font-size: 9px; cursor: pointer; margin-top: 5px; display: block; width: 90%; margin-inline: auto; font-weight: bold; }
+        .btn-th-filter.active { background: #ffeb3b; color: #000; }
 
-        /* Modal Douglas Estilo */
+        /* Modal Filtro */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; width: 90%; max-width: 340px; margin: 50px auto; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .modal-header { padding: 12px; background: var(--primary); color: white; font-weight: bold; text-align: center; }
-        .modal-body { padding: 10px; overflow-y: auto; max-height: 350px; }
-        .filter-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; cursor: pointer; }
-        .filter-item input { width: 17px; height: 17px; }
-        .modal-footer { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f1f1; }
+        .modal-content { background: white; width: 90%; max-width: 350px; margin: 50px auto; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.4); }
+        .modal-header { padding: 15px; background: var(--primary); color: white; font-weight: bold; text-align: center; }
+        .modal-body { padding: 10px; overflow-y: auto; max-height: 400px; }
+        .filter-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; }
+        .filter-item:hover { background: #f9f9f9; }
+        .modal-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f1f1; }
         .btn-m { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .btn-m-apply { background: var(--primary); color: white; }
-        .btn-m-can { background: #6c757d; color: white; }
-        .btn-m-all { background: white; border: 1px solid #ccc; grid-column: span 1; }
+        .btn-m-apply { background: #2e7d32; color: white; }
+        .btn-m-can { background: #d32f2f; color: white; }
+        .btn-m-all { background: #fff; border: 1px solid #ccc; grid-column: span 1; }
     </style>
 </head>
 <body>
@@ -85,17 +87,17 @@
     <div class="banner-title">EXPEDIÇÃO_MÓVEIS SIMONETTI</div>
 
     <div class="charts-row">
-        <div class="chart-card"><h3>STATUS</h3><canvas id="chartStatus"></canvas></div>
-        <div class="chart-card"><h3>VEÍCULOS</h3><canvas id="chartVeiculos"></canvas></div>
+        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES</h3><canvas id="chartStatus"></canvas></div>
+        <div class="chart-card"><h3>OCUPAÇÃO POR VEÍCULO</h3><canvas id="chartVeiculos"></canvas></div>
     </div>
 
-    <div class="kpi-container"><div class="kpi-badge" id="txtKpi">CARROS: 0 | EXPEDIÇÕES: 0</div></div>
+    <div class="kpi-container"><div class="kpi-badge" id="txtKpi">CARGAS: 0 | EXPEDIÇÕES: 0</div></div>
 
     <div class="toolbar">
-        <input type="text" id="inputBusca" class="search-box" placeholder="Busca rápida..." onkeyup="buscaGlobal()">
+        <input type="text" id="inputBusca" class="search-box" placeholder="🔍 Busca rápida em toda a tabela..." onkeyup="buscaGlobal()">
         <div class="btn-group">
-            <button class="btn-header" style="background:#2e7d32" onclick="exportarExcel()">EXCEL</button>
-            <button class="btn-header" style="background:#0288d1" onclick="exportarPDF()">PDF</button>
+            <button class="btn-header" style="background:#1b5e20" onclick="exportarExcel()">📊 EXCEL</button>
+            <button class="btn-header" style="background:#b71c1c" onclick="exportarPDF()">📄 PDF</button>
         </div>
     </div>
 
@@ -105,13 +107,13 @@
                 <tr>
                     <th onclick="ordenar(0)">DATA ⇅ <button class="btn-th-filter" id="f-data" onclick="event.stopPropagation(); abrirFiltro('data')">FILTRAR</button></th>
                     <th onclick="ordenar(1)">EXPEDIÇÃO ⇅ <button class="btn-th-filter" id="f-codigo" onclick="event.stopPropagation(); abrirFiltro('codigo')">FILTRAR</button></th>
-                    <th onclick="ordenar(2)">PLACAS ⇅ <button class="btn-th-filter" id="f-placa" onclick="event.stopPropagation(); abrirFiltro('placa')">FILTRAR</button></th>
+                    <th onclick="ordenar(2)">PLACA ⇅ <button class="btn-th-filter" id="f-placa" onclick="event.stopPropagation(); abrirFiltro('placa')">FILTRAR</button></th>
                     <th onclick="ordenar(3)">DESTINO ⇅ <button class="btn-th-filter" id="f-destino" onclick="event.stopPropagation(); abrirFiltro('destino')">FILTRAR</button></th>
                     <th onclick="ordenar(4)">BOX ⇅ <button class="btn-th-filter" id="f-box" onclick="event.stopPropagation(); abrirFiltro('box')">FILTRAR</button></th>
                     <th onclick="ordenar(5)">STATUS ⇅ <button class="btn-th-filter" id="f-status" onclick="event.stopPropagation(); abrirFiltro('status')">FILTRAR</button></th>
                     <th onclick="ordenar(6)">CONFERENTE ⇅ <button class="btn-th-filter" id="f-conferente" onclick="event.stopPropagation(); abrirFiltro('conferente')">FILTRAR</button></th>
                     <th onclick="ordenar(7)">VEÍCULO ⇅ <button class="btn-th-filter" id="f-tipo" onclick="event.stopPropagation(); abrirFiltro('tipo')">FILTRAR</button></th>
-                    <th onclick="ordenar(8)">PESO ⇅</th>
+                    <th onclick="ordenar(8)">PESO (KG) ⇅</th>
                 </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
@@ -126,8 +128,8 @@
         <div class="modal-footer">
             <button class="btn-m btn-m-all" onclick="checkTodos(true)">Todos</button>
             <button class="btn-m btn-m-all" onclick="checkTodos(false)">Nenhum</button>
-            <button class="btn-m btn-m-can" onclick="fecharF()">Cancelar</button>
-            <button class="btn-m btn-m-apply" onclick="aplicarF()">Aplicar</button>
+            <button class="btn-m btn-m-can" onclick="fecharF()">Sair</button>
+            <button class="btn-m btn-m-apply" onclick="aplicarF()">Aplicar Filtro</button>
         </div>
     </div>
 </div>
@@ -143,12 +145,24 @@
     const db = getFirestore(app);
 
     let dadosFull = [], filtrosAtivos = {}, colAtual = '', cS, cV;
-    const CORES = { 'CARRETA': '#1b5e20', 'TRUCK': '#4682B4', '3/4': '#7b1fa2', 'TOCO': '#ffeb3b', 'FINALIZADO': '#1b5e20', 'EM SEPARAÇÃO': '#ef6c00' };
+    
+    // MAPEAMENTO DE CORES FIEL À OUTRA PÁGINA
+    const CORES = { 
+        'CARRETA': '#1b5e20',
+        'TRUCK': '#03a9f4', 
+        'CARRO 3/4': '#7b1fa2', 
+        'TOCO': '#fbc02d',
+        'FINALIZADO': '#1b5e20', 
+        'EM SEPARAÇÃO': '#e65100',
+        'CRIADO': '#0d47a1',
+        'EM CARREGAMENTO': '#95e9ae',
+        'CARREGADO/EM VIAGEM': '#d123a3',      
+        'CONFERÊNCIA FINALIZADA': '#4a148c',     
+    };
 
     onAuthStateChanged(auth, async user => {
         if(user) {
-            const uSnap = await getDoc(doc(db, "usuarios", "LqfKXq6uevZMAw49sdEKpbprLa53"));
-            document.getElementById('userName').innerText = "Bem-vindo, " + (uSnap.exists() ? uSnap.data().nome.toUpperCase() : "DOUGLAS BRITO");
+            document.getElementById('userName').innerText = "DOUGLAS BRITO";
             carregar();
         } else { window.location.href="index.html"; }
     });
@@ -156,16 +170,21 @@
     async function carregar() {
         const snap = await getDocs(collection(db, "expedicoes"));
         dadosFull = snap.docs.map(d => d.data());
+        
+        // Filtro inicial pela data de hoje
         const hoje = new Date().toISOString().split('T')[0];
         filtrosAtivos['data'] = [hoje];
         document.getElementById('f-data').classList.add('active');
+        
         processar();
     }
 
     function processar() {
         let filtrados = [...dadosFull];
         Object.keys(filtrosAtivos).forEach(c => {
-            if(filtrosAtivos[c].length > 0) filtrados = filtrados.filter(d => filtrosAtivos[c].includes(String(d[c])));
+            if(filtrosAtivos[c].length > 0) {
+                filtrados = filtrados.filter(d => filtrosAtivos[c].includes(String(d[c])));
+            }
         });
         exibir(filtrados);
     }
@@ -174,21 +193,24 @@
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
         lista.forEach(d => {
-            const st = d.status.toUpperCase().replace(" ", "_");
+            const stClass = d.status.toUpperCase().replace(/ /g, "_");
             const vMod = d.tipo.toUpperCase().includes('3/4') ? '34' : d.tipo.toUpperCase();
+            
             corpo.innerHTML += `<tr>
                 <td>${d.data.split('-').reverse().join('/')}</td>
-                <td>${d.codigo}</td>
+                <td><strong>${d.codigo}</strong></td>
                 <td>${d.placa}</td>
                 <td>${d.destino}</td>
                 <td>${d.box}</td>
-                <td><span class="badge st-${st}">${d.status}</span></td>
+                <td><span class="badge st-${stClass}">${d.status}</span></td>
                 <td>${d.conferente}</td>
                 <td><span class="badge v-${vMod}">${d.tipo}</span></td>
                 <td>${d.peso}</td>
             </tr>`;
         });
-        document.getElementById('txtKpi').innerText = `CARGAS: ${new Set(lista.map(i => i.placa)).size} | EXPEDIÇÕES: ${lista.length}`;
+        
+        const cargasUnicas = new Set(lista.map(i => i.placa + "_" + i.data)).size;
+        document.getElementById('txtKpi').innerText = `CARGAS: ${cargasUnicas} | EXPEDIÇÕES: ${lista.length}`;
         graficos(lista);
     }
 
@@ -201,45 +223,61 @@
         });
 
         if(cS) cS.destroy(); if(cV) cV.destroy();
+        
         const cfg = (tot) => ({
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'right', labels: { font:{size:9}, generateLabels: (c) => c.data.labels.map((l, i) => ({
-                    text: `${l}: ${c.data.datasets[0].data[i]} (${((c.data.datasets[0].data[i]/tot)*100).toFixed(1)}%)`,
-                    fillStyle: c.data.datasets[0].backgroundColor[i], index: i
-                }))}},
-                datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: v => v }
+                legend: { position: 'right', labels: { boxWidth: 12, font:{size:10} }},
+                datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: v => v }
             }
         });
 
         cS = new Chart(document.getElementById('chartStatus'), {
             type: 'pie', plugins: [ChartDataLabels],
-            data: { labels: Object.keys(sM), datasets: [{ data: Object.values(sM), backgroundColor: Object.keys(sM).map(k => CORES[k] || '#999') }]},
+            data: { 
+                labels: Object.keys(sM), 
+                datasets: [{ data: Object.values(sM), backgroundColor: Object.keys(sM).map(k => CORES[k] || '#999') }]
+            },
             options: cfg(lista.length)
         });
 
         cV = new Chart(document.getElementById('chartVeiculos'), {
             type: 'doughnut', plugins: [ChartDataLabels],
-            data: { labels: Object.keys(vM), datasets: [{ data: Object.values(vM), backgroundColor: Object.keys(vM).map(k => k.includes('CARRETA')?CORES['CARRETA']:k.includes('TRUCK')?CORES['TRUCK']:k.includes('3/4')?CORES['3/4']:CORES['TOCO']) }]},
+            data: { 
+                labels: Object.keys(vM), 
+                datasets: [{ 
+                    data: Object.values(vM), 
+                    backgroundColor: Object.keys(vM).map(k => {
+                        if(k.includes('CARRETA')) return CORES['CARRETA'];
+                        if(k.includes('TRUCK')) return CORES['TRUCK'];
+                        if(k.includes('3/4')) return CORES['3/4'];
+                        return CORES['TOCO'];
+                    }) 
+                }]
+            },
             options: cfg(lista.length)
         });
     }
 
-    // EFEITO CASCATA: Mostra apenas opções que existem nos dados já filtrados (exceto a coluna atual)
+    // --- SISTEMA DE FILTROS ---
     window.abrirFiltro = (col) => {
         colAtual = col;
-        document.getElementById('mTit').innerText = col.toUpperCase();
+        document.getElementById('mTit').innerText = "FILTRAR: " + col.toUpperCase();
         const b = document.getElementById('mBody'); b.innerHTML = "";
         
-        // Dados filtrados pelas OUTRAS colunas
         let dadosCascata = [...dadosFull];
         Object.keys(filtrosAtivos).forEach(c => {
-            if(c !== col && filtrosAtivos[c].length > 0) dadosCascata = dadosCascata.filter(d => filtrosAtivos[c].includes(String(d[c])));
+            if(c !== col && filtrosAtivos[c].length > 0) {
+                dadosCascata = dadosCascata.filter(d => filtrosAtivos[c].includes(String(d[c])));
+            }
         });
 
         const unicos = [...new Set(dadosCascata.map(d => String(d[col])))].sort();
         unicos.forEach(v => {
-            const ck = filtrosAtivos[col]?.includes(v) ? 'checked' : '';
-            b.innerHTML += `<label class="filter-item"><input type="checkbox" value="${v}" ${ck}> ${col==='data'?v.split('-').reverse().join('/'):v}</label>`;
+            const ck = (filtrosAtivos[col] || []).includes(v) ? 'checked' : '';
+            const label = col === 'data' ? v.split('-').reverse().join('/') : v;
+            b.innerHTML += `<label class="filter-item"><input type="checkbox" value="${v}" ${ck}> ${label}</label>`;
         });
         document.getElementById('modalF').style.display = 'block';
     };
@@ -254,6 +292,7 @@
     window.fecharF = () => document.getElementById('modalF').style.display = 'none';
     window.checkTodos = (s) => document.querySelectorAll('#mBody input').forEach(i => i.checked = s);
 
+    // --- ORDENAÇÃO E BUSCA ---
     window.ordenar = (n) => {
         const table = document.getElementById("tabelaMaster");
         let rows, switching = true, i, x, y, should, dir = "asc", count = 0;
@@ -276,14 +315,48 @@
         for (let i = 0; i < tr.length; i++) tr[i].style.display = tr[i].innerText.toUpperCase().indexOf(input) > -1 ? "" : "none";
     };
 
-    window.exportarExcel = () => XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tabelaMaster')), "Expedicao_Simonetti.xlsx");
+    // --- EXPORTAÇÃO ---
+    window.exportarExcel = () => {
+        const table = document.getElementById('tabelaMaster');
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, "Dashboard_Expedicao_Simonetti.xlsx");
+    };
+
     window.exportarPDF = () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
-        doc.text("MS EXPEDIÇÃO - SIMONETTI", 14, 15);
-        doc.autoTable({ html: '#tabelaMaster', startY: 25, headStyles: {fillColor:[183,28,28]}, styles:{fontSize:7} });
-        doc.save("Relatorio.pdf");
+        const dataH = new Date().toLocaleDateString('pt-BR');
+
+        // Cabeçalho Vermelho (Igual à outra página)
+        doc.setFillColor(183, 28, 28);
+        doc.rect(0, 0, 297, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.text("RELATÓRIO DE EXPEDIÇÃO - MÓVEIS SIMONETTI", 15, 12);
+        
+        // Totais no Topo
+        const totExp = document.getElementById('corpoTabela').rows.length;
+        const cargas = document.getElementById('txtKpi').innerText.split('|')[0];
+        doc.setFontSize(10);
+        doc.text(`${cargas}  |  TOTAL EXPEDIÇÕES: ${totExp}  |  EMISSÃO: ${dataH}`, 15, 20);
+
+        doc.autoTable({
+            html: '#tabelaMaster',
+            startY: 30,
+            theme: 'grid',
+            headStyles: { fillColor: [183, 28, 28] },
+            styles: { fontSize: 7, halign: 'center' },
+            didParseCell: (data) => {
+                // Remove os botões de filtro da exportação do PDF
+                if (data.section === 'head') {
+                    data.cell.text = data.cell.text[0].split('⇅')[0];
+                }
+            }
+        });
+
+        doc.save(`Dashboard_Simonetti_${dataH.replace(/\//g, '-')}.pdf`);
     };
+
     document.getElementById('btnSair').onclick = () => signOut(auth);
 </script>
 </body>
