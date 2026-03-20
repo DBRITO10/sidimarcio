@@ -344,12 +344,14 @@
     const coresStatusPDF = {
         'CRIADO': '#0d47a1',
         'EM SEPARAÇÃO': '#e65100',
+        'EM CARREGAMENTO': '#95e9ae',
+        'CARREGADO/EM VIAGEM': '#d123a3',      
         'CONFERÊNCIA FINALIZADA': '#4a148c',
         'FINALIZADO': '#1b5e20'
     };
 
     const coresVeiculosPDF = {
-        'CARRO': '#4a148c', 'TOCO': '#fbc02d', 'TRUCK': '#03a9f4', 'CARRETA': '#1b5e20', 'CARRETTA': '#1b5e20'
+        'CARRO': '#4a148c', 'TOCO': '#fbc02d', 'TRUCK': '#03a9f4', 'CARRETA': '#1b5e20', 'CARRETTA': '#1b5e20', ' CARRO 3/4': '#4a148c'
     };
 
     window.exportarExcel = () => {
@@ -381,7 +383,7 @@
 
         // Subtítulo com Totais (Como era antes)
         doc.setFontSize(11);
-        doc.text(`TOTAL EXPEDIÇÕES: ${totalExp}   |   TOTAL CARROS (PLACAS ÚNICAS): ${placasUnicas}   |   DATA: ${dataAtual}`, 15, 20);
+        doc.text(`TOTAL DE EXPEDIÇÕES: ${totalExp}   |   TOTAL DE CARROS: ${placasUnicas}   |   DATA: ${dataAtual}`, 15, 20);
 
         const body = [];
         const contagemPorTipo = {};
