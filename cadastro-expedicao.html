@@ -45,28 +45,28 @@
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: #f8f8f8; padding: 12px; text-align: left; font-size: 11px; color: #666; border-bottom: 2px solid #eee; text-transform: uppercase; cursor: pointer; user-select: none; }
-        th:hover { background: #f0f0f0; }
-        th.sort-asc::after { content: " ▲"; color: var(--primary); }
-        th.sort-desc::after { content: " ▼"; color: var(--primary); }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 
+        /* --- CORES DE STATUS --- */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-align: center; display: inline-block; min-width: 80px; }
-        .status-criado { background: #bbdefb; color: #0d47a1; }
-        .status-separacao { background: #ffe0b2; color: #e65100; }
-        .status-carregado/em viagem { background: #e1bee7; color: #4a148c; }
-        .status-conf-finalizada { background: #e1bee7; color: #4a148c; }
-        .status-em carregamento { background: #fff9c4; color: #f57f17; }
-        .status-finalizado { background: #c8e6c9; color: #1b5e20; }
+        .status-criado { background: #bbdefb; color: #0d47a1; } /* Azul claro */
+        .status-separacao { background: #ffe0b2; color: #e65100; } /* Laranja */
+        .status-conf-finalizada { background: #f3e5f5; color: #4a148c; } /* Roxo */
+        .status-em-carregamento { background: #c8e6c9; color: #2e7d32; } /* Verde claro */
+        .status-carregado-viagem { background: #fce4ec; color: #d81b60; } /* Rosa */
+        .status-finalizado { background: #1b5e20; color: white; } /* Verde escuro */
 
-        .btn-acao { padding: 6px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 2px; transition: 0.2s; }
+        /* --- CORES DE VEÍCULOS --- */
+        .tipo-carro { color: #4a148c; font-weight: bold; } /* Roxo */
+        .tipo-toco { color: #fbc02d; font-weight: bold; } /* Amarelo */
+        .tipo-truck { color: #03a9f4; font-weight: bold; } /* Azul claro */
+        .tipo-carreta { color: #1b5e20; font-weight: bold; } /* Verde escuro */
+
+        .btn-acao { padding: 6px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 2px; }
         .btn-edit { background: #90a4ae; color: white; }
         .btn-del { background: #ffcdd2; color: #c62828; }
         .b-sep { background: #ef6c00; color: white; }
         .b-ok { background: #7b1fa2; color: white; }
-
-        @media (max-width: 600px) {
-            .grid-form { grid-template-columns: 1fr 1fr; }
-        }
     </style>
 </head>
 <body>
