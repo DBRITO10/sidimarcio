@@ -58,9 +58,16 @@
         .btn-th-filter { background: rgba(255,255,255,0.9); color: var(--primary); border: none; padding: 2px 5px; border-radius: 3px; font-size: 8px; cursor: pointer; margin-top: 5px; display: block; width: 80%; margin-inline: auto; font-weight: bold; }
         .btn-th-filter.active { background: #ffeb3b; color: #000; }
 
+        /* MODAL */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; width: 90%; max-width: 350px; margin: 50px auto; border-radius: 8px; overflow: hidden; }
         .modal-header { padding: 15px; background: var(--primary); color: white; font-weight: bold; text-align: center; }
+        
+        /* BOTÕES DE MARCAR TODOS NO MODAL */
+        .modal-selection-tools { display: flex; gap: 5px; padding: 10px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+        .btn-selection { flex: 1; padding: 5px; font-size: 10px; font-weight: bold; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 3px; }
+        .btn-selection:hover { background: #eee; }
+
         .modal-body { padding: 10px; overflow-y: auto; max-height: 400px; }
         .filter-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; }
         .modal-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f1f1; }
