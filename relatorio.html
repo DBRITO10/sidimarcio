@@ -155,8 +155,26 @@
         'EM CARREGAMENTO': '#95e9ae', 'CARREGADO/EM VIAGEM': '#d123a3', 'CONFERÊNCIA FINALIZADA': '#4a148c'
     };
 
-    onAuthStateChanged(auth, async user => {
-        if(user) { carregar(); } else { window.location.href="index.html"; }
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+           // 1. Busca os dados adicionais do usuário no Firestore
+           const userDocRef = doc(db, "usuarios", user.uid); // Assume que a coleção se chama "usuarios"
+           const userSnap = await getDoc(userDocRef);
+
+           if (userSnap.exists()) {
+                const userData = userSnap.data();
+                // 2. Atualiza o HTML com o nome vindo do banco (campo 'nome')
+                document.getElementById('userName').innerText = userData.nome || user.email;
+            } else {
+                // Caso não tenha documento no banco, usa o e-mail como reserva
+                document.getElementById('userName').innerText = user.email;
+            }
+        
+            // Chama sua função de carregar os dados da expedição
+            carregar(); 
+        } else {
+            window.location.href = "index.html";
+        }
     });
 
     async function carregar() {
