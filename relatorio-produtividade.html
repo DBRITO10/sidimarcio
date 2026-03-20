@@ -11,29 +11,40 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); margin: 0; }
         
         header { 
-            background: var(--primary); color: white; padding: 10px 20px; 
+            background: var(--primary); color: white; padding: 0 15px; 
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 1000;
+            height: 60px; /* Altura fixa para alinhar melhor os itens */
         }
+
+        .header-left { display: flex; align-items: center; gap: 10px; }
 
         .btn-header {
             background: rgba(255, 255, 255, 0.15); border: 1px solid white; color: white;
             padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
-            text-decoration: none; font-size: 13px;
+            text-decoration: none; font-size: 13px; display: inline-flex; align-items: center;
         }
         .btn-header:hover { background: white; color: var(--primary); }
 
-        .container { padding: 20px; max-width: 1300px; margin: auto; }
-        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .user-badge { font-weight: bold; font-size: 14px; white-space: nowrap; }
+
+        /* Esconde o título no celular para não amontoar os botões */
+        @media (max-width: 600px) {
+            .header-center { display: none; }
+            .user-badge { font-size: 12px; }
+        }
+
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
+        .card { background: var(--white); padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        /* Filtro de Período */
         .periodo-box { 
             display: flex; gap: 10px; align-items: center; margin-bottom: 20px; 
             padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd;
+            flex-wrap: wrap; /* Garante ajuste no celular */
         }
         .periodo-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; min-width: 900px; }
         th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-size: 11px; color: #333; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
 
@@ -58,10 +69,16 @@
 <header>
     <div class="header-left">
         <a href="menu.html" class="btn-header">⬅ VOLTAR</a>
-        <span class="user-badge" id="userName" style="margin-left: 10px;">Carregando...</span>
+        <span class="user-badge" id="userName">Carregando...</span>
     </div>
-    <h1 style="font-size: 18px; margin: 0;">Relatório de Qualidade (Confirmados)</h1>
-    <button class="btn-header" id="btnLogout">SAIR</button>
+    
+    <div class="header-center">
+        <h1 style="font-size: 16px; margin: 0; text-transform: uppercase;">Qualidade</h1>
+    </div>
+
+    <div class="header-right">
+        <button class="btn-header" id="btnLogout">SAIR</button>
+    </div>
 </header>
 
 <div class="container">
@@ -76,9 +93,9 @@
                 <label style="font-size: 12px; font-weight: bold; display: block;">Data Final:</label>
                 <input type="date" id="dataFim">
             </div>
-            <button class="btn-header" style="background: var(--primary); border: none; align-self: flex-end; height: 35px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR PERÍODO</button>
-            <div style="flex-grow: 1; text-align: right; align-self: flex-end;">
-                <button class="btn-excel" id="btnExportExcel">📊 EXPORTAR EXCEL</button>
+            <button class="btn-header" style="background: var(--primary); border: none; height: 35px; margin-top: 15px;" onclick="filtrarPorPeriodo()">🔍 FILTRAR</button>
+            <div style="flex-grow: 1; text-align: right; margin-top: 15px;">
+                <button class="btn-excel" id="btnExportExcel">📊 EXCEL</button>
             </div>
         </div>
 
@@ -96,7 +113,7 @@
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
-                    <tr><td colspan="7" style="text-align:center;">Carregando dados de hoje...</td></tr>
+                    <tr><td colspan="7" style="text-align:center;">Aguardando...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -106,7 +123,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAhxv3c9aajgCYHnEJG7TS_VxKqJ06KBJg", authDomain: "logistica-exp.firebaseapp.com", projectId: "logistica-exp" };
     const app = initializeApp(firebaseConfig);
@@ -115,9 +132,21 @@
 
     let todosOsDados = [];
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
         if(user) { 
-            document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase(); 
+            // BUSCA NOME DO USUÁRIO NO BANCO
+            try {
+                const userRef = doc(db, "usuarios", user.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    document.getElementById('userName').innerText = "👤 " + userSnap.data().nome;
+                } else {
+                    document.getElementById('userName').innerText = "👤 " + user.email.split('@')[0].toUpperCase();
+                }
+            } catch (e) {
+                document.getElementById('userName').innerText = "👤 Usuário";
+            }
+
             setarDatasPadrao();
             carregarDadosAutomatico(); 
         } 
@@ -126,7 +155,6 @@
 
     document.getElementById('btnLogout').onclick = () => signOut(auth);
 
-    // Ajusta os inputs para a data de hoje por padrão
     function setarDatasPadrao() {
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('dataInicio').value = hoje;
@@ -135,7 +163,6 @@
 
     async function carregarDadosAutomatico() {
         const hoje = new Date().toISOString().split('T')[0];
-        // Busca apenas o que já foi FINALIZADO (recebido na central) e da data de hoje
         const q = query(
             collection(db, "expedicoes"), 
             where("status", "==", "FINALIZADO"),
@@ -160,10 +187,9 @@
 
     async function carregarDados(customQuery) {
         const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando dados no servidor...</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando dados...</td></tr>';
 
         try {
-            // 1. Busca Equipes e Avarias em paralelo
             const [equipeSnap, avariasSnap, expSnap] = await Promise.all([
                 getDocs(collection(db, "equipe")),
                 getDocs(collection(db, "avarias")),
@@ -174,8 +200,8 @@
             equipeSnap.forEach(d => vinculos[d.data().nome] = d.data().vinculo || "TERCEIRO");
 
             let mapaAvarias = {};
-            avariasSnap.forEach(doc => {
-                const av = doc.data();
+            avariasSnap.forEach(docA => {
+                const av = docA.data();
                 if (av.expedicaoId) {
                     if (!mapaAvarias[av.expedicaoId]) mapaAvarias[av.expedicaoId] = [];
                     mapaAvarias[av.expedicaoId].push(av);
@@ -185,7 +211,7 @@
             todosOsDados = [];
 
             if (expSnap.empty) {
-                corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum recebimento confirmado neste período.</td></tr>';
+                corpo.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum dado encontrado.</td></tr>';
                 return;
             }
 
@@ -253,7 +279,6 @@
         });
     }
 
-    // Filtros de digitação (sub-filtros)
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('keyup', () => {
             const filtros = {};
