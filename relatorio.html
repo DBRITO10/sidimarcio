@@ -157,24 +157,17 @@
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-           // 1. Busca os dados adicionais do usuário no Firestore
-           const userDocRef = doc(db, "usuarios", user.uid); // Assume que a coleção se chama "usuarios"
-           const userSnap = await getDoc(userDocRef);
-
-           if (userSnap.exists()) {
-                const userData = userSnap.data();
-                // 2. Atualiza o HTML com o nome vindo do banco (campo 'nome')
-                document.getElementById('userName').innerText = userData.nome || user.email;
-            } else {
-                // Caso não tenha documento no banco, usa o e-mail como reserva
-                document.getElementById('userName').innerText = user.email;
-            }
-        
-            // Chama sua função de carregar os dados da expedição
-            carregar(); 
-        } else {
-            window.location.href = "index.html";
-        }
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists()) document.getElementById('userName').innerText = userDoc.data().nome;
+            const hoje = obterDataLocal();
+            document.getElementById('dataExp').value = hoje;
+            document.getElementById('filtroInicio').value = hoje;
+            document.getElementById('filtroFim').value = hoje;
+            carregarPlacas();
+            carregarDestinos();
+            carregarConferentes();
+            listarExpedicoes(hoje, hoje); 
+        } else { window.location.href = "index.html"; }
     });
 
     async function carregar() {
