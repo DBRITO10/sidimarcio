@@ -344,7 +344,7 @@
                 }
             }
         });
-        doc.save(`Relatorio_Expedicao_Simonetti_${new Date().getTime()}.pdf`);
+        doc.save(`Relatorio_Expedicao_Simonetti_${dataAtual.replace(/\//g, '-')}.pdf`);
     };
 
     document.getElementById('btnSair').onclick = () => signOut(auth);
