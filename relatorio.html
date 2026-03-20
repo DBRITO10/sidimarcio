@@ -83,8 +83,8 @@
     <div class="banner-title">EXPEDIÇÃO_MÓVEIS SIMONETTI</div>
 
     <div class="charts-row">
-        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES (TOTAL)</h3><canvas id="chartStatus"></canvas></div>
-        <div class="chart-card"><h3>VEÍCULOS ÚNICOS NO PÁTIO</h3><canvas id="chartVeiculos"></canvas></div>
+        <div class="chart-card"><h3>STATUS DAS EXPEDIÇÕES</h3><canvas id="chartStatus"></canvas></div>
+        <div class="chart-card"><h3>VEÍCULOS</h3><canvas id="chartVeiculos"></canvas></div>
     </div>
 
     <div class="kpi-container"><div class="kpi-badge" id="txtKpi">CARROS: 0 | EXPEDIÇÕES: 0</div></div>
@@ -284,15 +284,121 @@
         }
     };
 
-    window.exportarExcel = () => XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tabelaMaster')), "Expedicao_Simonetti.xlsx");
+    const coresStatusPDF = {
+        'CRIADO': '#0d47a1',
+        'EM SEPARAÇÃO': '#e65100',
+        'EM CARREGAMENTO': '#95e9ae',
+        'CARREGADO/EM VIAGEM': '#d123a3',      
+        'CONFERÊNCIA FINALIZADA': '#4a148c',
+        'FINALIZADO': '#1b5e20'
+    };
+
+    const coresVeiculosPDF = {
+        'TOCO': '#fbc02d',
+        'TRUCK': '#03a9f4',
+        'CARRETA': '#1b5e20',
+        'CARRO 3/4': '#4a148c'
+    };
+
+    window.exportarExcel = () => {
+        const tabelaOriginal = document.getElementById('tabelaExpedicoes');
+        const copiaTabela = tabelaOriginal.cloneNode(true);
+        copiaTabela.querySelectorAll('tr').forEach(linha => {
+            if (linha.lastElementChild) linha.removeChild(linha.lastElementChild);
+        });
+        const wb = XLSX.utils.table_to_book(copiaTabela, { sheet: "Expedicoes" });
+        XLSX.writeFile(wb, `Expedicao_Simonetti_${new Date().toLocaleDateString()}.xlsx`);
+    };
+
+    // --- PDF COM RESUMO NO TOPO ---
     window.exportarPDF = () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
-        doc.autoTable({ html: '#tabelaMaster', startY: 20, theme: 'grid', headStyles: { fillColor: [183, 28, 28] } });
-        doc.save("Relatorio_Simonetti.pdf");
-    };
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        
+        // Cabeçalho Vermelho
+        doc.setFillColor(178, 34, 34);
+        doc.rect(0, 0, 297, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.text("EXPEDIÇÃO - MÓVEIS SIMONETTI", 15, 12);
 
-    document.getElementById('btnSair').onclick = () => signOut(auth);
+        // Cálculos para o Cabeçalho
+        const totalExp = dadosOriginais.length;
+        const placasUnicas = new Set(dadosOriginais.map(item => item.placa + "_" + item.data)).size;
+
+        // Subtítulo com Totais (Como era antes)
+        doc.setFontSize(11);
+        doc.text(`TOTAL DE EXPEDIÇÕES: ${totalExp}   |   TOTAL DE CARROS: ${placasUnicas}   |   DATA: ${dataAtual}`, 15, 20);
+
+        const body = [];
+        const contagemPorTipo = {};
+
+        dadosOriginais.forEach(item => {
+            body.push([
+                item.data.split('-').reverse().join('/'),
+                item.codigo,
+                item.placa,
+                item.tipo,
+                item.destino,
+                item.box,
+                item.peso,
+                item.conferente,
+                item.status
+            ]);
+            
+            // Lógica de carros únicos para o resumo final
+            const t = item.tipo.toUpperCase();
+            if (!contagemPorTipo[t]) contagemPorTipo[t] = new Set();
+            contagemPorTipo[t].add(item.placa + "_" + item.data);
+        });
+
+        doc.autoTable({
+            startY: 30,
+            head: [['DATA', 'EXPEDIÇÃO', 'PLACA', 'TIPO', 'DESTINO', 'BOX', 'PESO', 'CONFERENTE', 'STATUS']],
+            body: body,
+            theme: 'grid',
+            styles: { fontSize: 7, halign: 'center' },
+            headStyles: { fillColor: [178, 34, 34] },
+            didParseCell: (data) => {
+                if (data.section === 'body') {
+                    if (data.column.index === 3) {
+                        const tipo = data.cell.raw.toUpperCase();
+                        if (coresVeiculosPDF[tipo]) {
+                            data.cell.styles.textColor = hexToRgb(coresVeiculosPDF[tipo]);
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                    if (data.column.index === 8) {
+                        const status = data.cell.raw.toUpperCase();
+                        if (coresStatusPDF[status]) {
+                            data.cell.styles.textColor = hexToRgb(coresStatusPDF[status]);
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Resumo por Tipos ao Final
+        let finalY = doc.lastAutoTable.finalY + 10;
+        if (finalY > 160) { doc.addPage(); finalY = 20; }
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        doc.text("RESUMO DE CARROS ÚNICOS POR TIPO:", 15, finalY);
+
+        const summaryData = Object.keys(contagemPorTipo).map(tipo => [tipo, contagemPorTipo[tipo].size]);
+        doc.autoTable({
+            startY: finalY + 5,
+            head: [["VEÍCULO", "QTD CARROS"]],
+            body: summaryData,
+            tableWidth: 80,
+            theme: 'grid',
+            headStyles: { fillColor: [80, 80, 80] }
+        });
+
+        doc.save(`Relatorio_Simonetti_${dataAtual.replace(/\//g, '-')}.pdf`);
+    };
 </script>
 </body>
 </html>
