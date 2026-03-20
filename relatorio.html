@@ -58,22 +58,20 @@
         .btn-th-filter { background: rgba(255,255,255,0.9); color: var(--primary); border: none; padding: 2px 5px; border-radius: 3px; font-size: 8px; cursor: pointer; margin-top: 5px; display: block; width: 80%; margin-inline: auto; font-weight: bold; }
         .btn-th-filter.active { background: #ffeb3b; color: #000; }
 
-        /* MODAL */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; width: 90%; max-width: 350px; margin: 50px auto; border-radius: 8px; overflow: hidden; }
         .modal-header { padding: 15px; background: var(--primary); color: white; font-weight: bold; text-align: center; }
-        
-        /* BOTÕES DE MARCAR TODOS NO MODAL */
-        .modal-selection-tools { display: flex; gap: 5px; padding: 10px; background: #f9f9f9; border-bottom: 1px solid #eee; }
-        .btn-selection { flex: 1; padding: 5px; font-size: 10px; font-weight: bold; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 3px; }
-        .btn-selection:hover { background: #eee; }
-
         .modal-body { padding: 10px; overflow-y: auto; max-height: 400px; }
         .filter-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; }
         .modal-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f1f1; }
         .btn-m { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-m-apply { background: #2e7d32; color: white; }
         .btn-m-can { background: #d32f2f; color: white; }
+
+        /* Estilo dos novos botões de Marcar/Desmarcar */
+        .selection-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 10px; border-bottom: 2px solid #ddd; background: #fafafa; }
+        .btn-sel { padding: 5px; font-size: 10px; font-weight: bold; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 3px; }
+        .btn-sel:hover { background: #eee; }
     </style>
 </head>
 <body>
@@ -127,9 +125,9 @@
 <div id="modalF" class="modal">
     <div class="modal-content">
         <div class="modal-header" id="mTit">FILTRAR</div>
-        <div class="modal-selection-tools">
-            <button class="btn-selection" onclick="marcarTodos(true)">MARCAR TODOS</button>
-            <button class="btn-selection" onclick="marcarTodos(false)">NENHUM</button>
+        <div class="selection-tools">
+            <button class="btn-sel" onclick="marcarTodos(true)">MARCAR TODOS</button>
+            <button class="btn-sel" onclick="marcarTodos(false)">DESMARCAR TODOS</button>
         </div>
         <div class="modal-body" id="mBody"></div>
         <div class="modal-footer">
@@ -165,7 +163,6 @@
         const snap = await getDocs(collection(db, "expedicoes"));
         dadosFull = snap.docs.map(d => d.data());
         
-        // Define data de hoje (formato do banco)
         const hoje = new Date().toISOString().split('T')[0];
         filtrosAtivos['data'] = [hoje];
         document.getElementById('f-data').classList.add('active');
@@ -211,10 +208,8 @@
     function graficos(lista) {
         const sM = {}, vM = {};
         const veiculosUnicos = new Set();
-
         lista.forEach(d => { 
             sM[d.status] = (sM[d.status] || 0) + 1; 
-
             const idVeiculo = d.placa.toUpperCase() + "_" + d.data;
             if(!veiculosUnicos.has(idVeiculo)) {
                 veiculosUnicos.add(idVeiculo);
@@ -222,9 +217,7 @@
                 vM[tipo] = (vM[tipo] || 0) + 1;
             }
         });
-
         if(cS) cS.destroy(); if(cV) cV.destroy();
-        
         const cfg = {
             responsive: true, maintainAspectRatio: false,
             plugins: {
@@ -232,30 +225,27 @@
                 datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: v => v }
             }
         };
-
         cS = new Chart(document.getElementById('chartStatus'), {
             type: 'pie', plugins: [ChartDataLabels],
             data: { labels: Object.keys(sM), datasets: [{ data: Object.values(sM), backgroundColor: Object.keys(sM).map(k => CORES[k] || '#999') }]},
             options: cfg
         });
-
         cV = new Chart(document.getElementById('chartVeiculos'), {
             type: 'doughnut', plugins: [ChartDataLabels],
-            data: { 
-                labels: Object.keys(vM), 
-                datasets: [{ 
-                    data: Object.values(vM), 
-                    backgroundColor: Object.keys(vM).map(k => {
-                        if(k.includes('CARRETA')) return CORES['CARRETA'];
-                        if(k.includes('TRUCK')) return CORES['TRUCK'];
-                        if(k.includes('3/4')) return CORES['CARRO 3/4'];
-                        return CORES['TOCO'];
-                    }) 
-                }]
-            },
+            data: { labels: Object.keys(vM), datasets: [{ data: Object.values(vM), backgroundColor: Object.keys(vM).map(k => {
+                if(k.includes('CARRETA')) return CORES['CARRETA'];
+                if(k.includes('TRUCK')) return CORES['TRUCK'];
+                if(k.includes('3/4')) return CORES['CARRO 3/4'];
+                return CORES['TOCO'];
+            }) }]},
             options: cfg
         });
     }
+
+    window.marcarTodos = (status) => {
+        const inputs = document.querySelectorAll('#mBody input[type="checkbox"]');
+        inputs.forEach(i => i.checked = status);
+    };
 
     window.abrirFiltro = (col) => {
         colAtual = col;
@@ -267,13 +257,7 @@
         });
         document.getElementById('modalF').style.display = 'block';
     };
-    
-    // NOVA FUNÇÃO: Marcar todos ou nenhum
-    window.marcarTodos = (status) => {
-        const checks = document.querySelectorAll('.filtro-check');
-        checks.forEach(c => c.checked = status);
-    };
-    
+
     window.aplicarF = () => {
         filtrosAtivos[colAtual] = Array.from(document.querySelectorAll('#mBody input:checked')).map(i => i.value);
         document.getElementById(`f-${colAtual}`).classList.toggle('active', filtrosAtivos[colAtual].length > 0);
@@ -301,18 +285,13 @@
         }
     };
 
-    // --- EXPORTAÇÃO PROFISSIONAL ---
-
     window.exportarExcel = () => {
         const originalTable = document.getElementById('tabelaMaster');
         const clone = originalTable.cloneNode(true);
-        
-        // Limpa os cabeçalhos do clone para o Excel não vir com "FILTRAR ⇅"
         clone.querySelectorAll('th').forEach(th => {
             const text = th.childNodes[0].textContent.replace('⇅', '').trim();
             th.innerHTML = text;
         });
-
         const wb = XLSX.utils.table_to_book(clone, { sheet: "Expedição Simonetti" });
         XLSX.writeFile(wb, `Expedicao_Simonetti_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
     };
@@ -321,22 +300,16 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
         const dataEmissao = new Date().toLocaleString('pt-BR');
-
-        // Design do Cabeçalho PDF
-        doc.setFillColor(183, 28, 28); // Vermelho Simonetti
+        doc.setFillColor(183, 28, 28);
         doc.rect(0, 0, 297, 35, 'F');
-        
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont("helvetica", "bold");
-        doc.text("RELATÓRIO OPERACIONAL DE EXPEDIÇÃO", 15, 18);
-        
+        doc.text("RELATÓRIO DE EXPEDIÇÃO", 15, 18);
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         const kpiText = document.getElementById('txtKpi').innerText;
         doc.text(`EMISSÃO: ${dataEmissao}  |  RESUMO: ${kpiText}`, 15, 28);
-
-        // Tabela no PDF
         doc.autoTable({
             html: '#tabelaMaster',
             startY: 40,
@@ -345,13 +318,11 @@
             bodyStyles: { fontSize: 8, halign: 'center', fontStyle: 'bold' },
             alternateRowStyles: { fillColor: [250, 240, 240] },
             didParseCell: (data) => {
-                // Remove o texto do botão de filtro no PDF
                 if (data.section === 'head') {
                     data.cell.text = data.cell.text[0].split('⇅')[0].trim();
                 }
             }
         });
-
         doc.save(`Relatorio_Expedicao_Simonetti_${new Date().getTime()}.pdf`);
     };
 
