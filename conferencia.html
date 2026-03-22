@@ -99,7 +99,7 @@
         <div id="detalheCarga" style="font-size: 12px; color: #444; background: #f5f5f5; padding: 12px; border-radius: 6px; line-height: 1.6;"></div>
         
         <div style="margin-top: 15px;">
-            <label style="font-size: 14px; font-weight: bold;">Status da Expedição:</label>
+            <label style="font-size: 14px; font-weight: bold;">Status da Carga:</label>
             <select id="selectAvaria" onchange="toggleCamposAvaria()">
                 <option value="nao">✅ CARGA 100% OK</option>
                 <option value="sim">⚠️ POSSUI DIVERGÊNCIA</option>
@@ -170,13 +170,13 @@
                     container.innerHTML += `
                         <div class="item-carga">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span class="badge-data">📅 ${dtExp}</span>
-                                <strong style="color:var(--primary)">Exp: ${data.data || data.expedicao}</strong>
+                                <span class="badge-data">📅 ${data.data}</span>
+                                <strong style="color:var(--primary)">Exp: ${data.codigo || data.expedicao}</strong>
                             </div>
                             <p class="info-p"><strong>🚛 Placa:</strong> ${data.placa}</p>
                             <p class="info-p"><strong>📦 Veículo:</strong> ${data.tipo || data.tipoVeiculo || '---'}</p>
                             <p class="info-p"><strong>📍 Destino:</strong> ${data.destino}</p>
-                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.data || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
+                            <button class="btn-confirmar" onclick="abrirModal('${d.id}', '${dtExp}', '${data.codigo || data.expedicao}', '${data.placa}', '${data.tipo || data.tipoVeiculo || '---'}')">CONFERIR RECEBIMENTO</button>
                         </div>`;
                 }
             });
